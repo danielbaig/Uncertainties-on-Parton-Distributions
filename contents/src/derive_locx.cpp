@@ -32,9 +32,15 @@ int locx(Eigen::VectorXd* xx, int nx, double x)
 		{
 			ju = jm;
 		}
-		// std::cout << ju << "," << jl << "," << jm << '\n';
+		//if (abs(pow(10., x) - 0.199) < 1e-5)
+		//{
+			//std::cout << "trial: " << (*xx)(28 - 1) << '\n';
+			//std::cout << "this: " << x << ' ' << (*xx)(jm - 1) << '\n';
+			//std::cout << ju << "," << jl << "," << jm << '\n';
+		//}
 	}
-	// std::cout << "exit\n";
+	
+	//std::cout << "exit\n";
 	assert(jl != 0);
 
 	return jl;	

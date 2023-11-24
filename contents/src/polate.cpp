@@ -134,11 +134,19 @@ double InterpolatePDF(int ip, int np, int ih, int nhess, double x, double y,
         //std::cout << "cc..."
           //  << cc(ip - 1, ih, n - 1, m - 1, l - 1, 0) << '\n';
 
-        z = t * z + (((*cc)(ip-1, ih, n-1, m-1, l-1, 3) * u + (*cc)(ip-1, ih, n-1, m-1, l-1, 2)) * u
-            + (*cc)(ip-1, ih, n-1, m-1, l-1, 1)) * u + (*cc)(ip-1, ih, n-1, m-1, l-1, 0);
+        z = t * z + (((*cc)(ip-1, ih, n-1, m-1, l-1, 3) * u 
+            + (*cc)(ip-1, ih, n-1, m-1, l-1, 2)) * u
+            + (*cc)(ip-1, ih, n-1, m-1, l-1, 1)) * u 
+            + (*cc)(ip-1, ih, n-1, m-1, l-1, 0);
     }
 
-    //std::cout << z << '\n';
+    //if (ip == 9 && abs(pow(10.,x) - 0.199) < 1e-5)
+    //{
+        //std::cout << "interp: " << (*xx)(28 - 1) << ' ' << (*yy)(28 - 1) << '\n';
+       // std::cout << "z: " << n << ',' << m << ": " << z << '\n';
+        //std::cout << "cc: " << (*cc)(ip - 1, ih, n - 1, m - 1, 0, 3) 
+        //    << " " << t << " " << u << '\n';
+    //}
 
 
     return z;

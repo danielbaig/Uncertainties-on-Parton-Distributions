@@ -4,6 +4,10 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <initializer_list>
+#include <iomanip>
+
+
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -233,8 +237,15 @@ void InitialisePDF(int ip, int np, int ih, int nhess, int nx, int my, int myc0, 
                     //if (cl(l-1) > 0.1) std::cout << cc(ip - 1, ih, n - 1, m - 1, k - 1, j - 1) << '\n';
                 }
             }
+            if (ih == -1)
+            {
+                std::cout << "cc_i " << n << ',' 
+                    << m << ": " << (*cc)(9 - 1, ih, n - 1, m - 1, 0, 3) << '\n';
+            }
         }
     }
+
+
     return;
 }
 
@@ -246,7 +257,7 @@ void InitialisePDF(int ip, int np, int ih, int nhess, int nx, int my, int myc0, 
 int nx{ 64 };
 int nq{ 48 };
 int np{ 12 };
-int nhess{ 4 * 32 };
+int nhess{ 2 * 32 };
 
 std::vector<std::string> oldprefix(nhess+1);
 int nqc0{};
@@ -293,7 +304,7 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
         1e-4, 2e-4, 4e-4, 6e-4, 8e-4,
         1e-3, 2e-3, 4e-3, 6e-3, 8e-3,
         1e-2, 1.4e-2, 2e-2, 3e-2, 4e-2, 6e-2, 8e-2,
-        1., 0.125, 0.15, 0.175, 0.2, 0.225, 0.25, 0.275,
+        0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25, 0.275,
         0.3, 0.325, 0.35, 0.375, 0.4, 0.425, 0.45, 0.475,
         0.5, 0.525, 0.55, 0.575, 0.6, 0.625, 0.65, 0.675,
         0.7, 0.725, 0.75, 0.775, 0.8, 0.825, 0.85, 0.875,
@@ -582,9 +593,9 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
         for (int m{ 1 }; m <= nq; ++m)
         {
             qql(m - 1) = log10(qq(m - 1));
-            // std::cout << qql(m - 1) << ',';
+            //std::cout << qql(m - 1) << ',';
         }
-        // std::cout << '\n';
+        //std::cout << '\n';
 
 
         //   Initialise all parton flavours.
@@ -599,6 +610,14 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
         //   ... End of initialisation for eigenvector set "ih".
     }
 
+    //if (ih == 64 && f==9 && x==0.199)
+    //{
+      //  std::cout << "xx: " << xxl(28 - 1) << ' ' << xx(28 - 1) << '\n';
+      //  for (int blip{ 1 }; blip <= nq; ++blip)
+        //{
+            //std::cout << qql(blip-1) << '\n';
+        //}
+    //}
     
 
     double qsq{ q * q };
@@ -742,7 +761,13 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
         }
     }
 
-    //std::cout << "res: " << res << '\n';
+    // if (f==9) std::cout << f << " " << res << '\n';
+
+
+    //if (x == 0.199 && f==9)
+    //{
+      //  std::cout << f << " res " << res << '\n';
+    //}
     
 
     return res;
@@ -770,12 +795,20 @@ void GetAllPDFs32(std::string prefix, int ih, double x, double q,
     double cv{ GetOnePDF32(prefix, ih, x, q, 10) };
     double bv{ GetOnePDF32(prefix, ih, x, q, 11) };
 
+    //if (x == 0.199)
+    //{
+      //  std::cout << *str << " " << sv << "\n\n";
+    //}
+
+
     // Antiquarks = quarks - valence quarks.
     *dsea = dn - *dnv;
     *usea = up - *upv;
     *sbar = *str - sv;
     *cbar = *chm - cv;
     *bbar = *bot - bv;
+
+    // std::cout << *dsea << ' ' << *usea << ' ' << *sbar << '\n';
 
     // Gluon.
     *glu = GetOnePDF32(prefix, ih, x, q, 0);
@@ -864,7 +897,7 @@ int main()
 
 
     double q{};
-    for (int nq{ 1 }; nq <= 1; ++nq)
+    for (int nq{ 1 }; nq <= 6; ++nq)
     {
         if (nq == 1) q2 = 1;
         else if (nq == 2) q2 = 2;
@@ -907,13 +940,15 @@ int main()
 
             for (int nmode{ 1 }; nmode <= 32; ++nmode)
             {
+                //if (x==0.199) std::cout << nmode << '\n';
+
                 prefix = "../data/msht/msht/msht20nnlo_as118_internal";  // prefix for the grid files
                 iset1 = 2 * nmode - 1;
                 iset2 = 2 * nmode;
                 GetAllPDFs32(prefix, iset1, x, q, &upv8, &dnv8, &usea8, &dsea8, &str8,
                     &sbar8, &chm8, &cbar8, &bot8, &bbar8, &glu8, &phot8);
 
-                // std::cout << upv7 << " " << upv8 << '\n';
+                //std::cout << upv7 << " " << upv8 << '\n';
                 sea8 = 2. * usea8 + 2. * dsea8 + str8 + sbar8;
                 seam8 = -usea8 + dsea8;
                 splus8 = str8 + sbar8;
@@ -925,34 +960,35 @@ int main()
                 sminus9 = str9 - sbar9;
                 seam9 = -usea9 + dsea9;
 
-                errg1 = max(glu8 - glu7, glu9 - glu7, 0.);
-                errg2 = max(glu7 - glu8, glu7 - glu9, 0.);
+                errg1 = max(max(glu8 - glu7, glu9 - glu7), 0.);
+                errg2 = max(max(glu7 - glu8, glu7 - glu9), 0.);
                 ERRSUMg1 = ERRSUMg1 + errg1 * errg1;
                 ERRSUMg2 = ERRSUMg2 + errg2 * errg2;
-                errupv1 = max(upv8 - upv7, upv9 - upv7, 0.);
-                errupv2 = max(upv7 - upv8, upv7 - upv9, 0.);
+                errupv1 = max(max(upv8 - upv7, upv9 - upv7), 0.);
+                errupv2 = max(max(upv7 - upv8, upv7 - upv9), 0.);
                 //std::cout << errupv1 << " " << errupv2 << '\n';
 
                 ERRSUMupv1 = ERRSUMupv1 + errupv1 * errupv1;
                 ERRSUMupv2 = ERRSUMupv2 + errupv2 * errupv2;
-                errdnv1 = max(dnv8 - dnv7, dnv9 - dnv7, 0.);
-                errdnv2 = max(dnv7 - dnv8, dnv7 - dnv9, 0.);
+                errdnv1 = max(max(dnv8 - dnv7, dnv9 - dnv7), 0.);
+                errdnv2 = max(max(dnv7 - dnv8, dnv7 - dnv9), 0.);
                 ERRSUMdnv1 = ERRSUMdnv1 + errdnv1 * errdnv1;
                 ERRSUMdnv2 = ERRSUMdnv2 + errdnv2 * errdnv2;
-                errsea1 = max(sea8 - sea7, sea9 - sea7, 0.);
-                errsea2 = max(sea7 - sea8, sea7 - sea9, 0.);
+                errsea1 = max(max(sea8 - sea7, sea9 - sea7), 0.);
+                errsea2 = max(max(sea7 - sea8, sea7 - sea9), 0.);
                 ERRSUMsea1 = ERRSUMsea1 + errsea1 * errsea1;
                 ERRSUMsea2 = ERRSUMsea2 + errsea2 * errsea2;
-                errseam1 = max(seam8 - seam7, seam9 - seam7, 0.);
-                errseam2 = max(seam7 - seam8, seam7 - seam9, 0.);
+                errseam1 = max(max(seam8 - seam7, seam9 - seam7), 0.);
+                errseam2 = max(max(seam7 - seam8, seam7 - seam9), 0.);
                 ERRSUMseam1 = ERRSUMseam1 + errseam1 * errseam1;
                 ERRSUMseam2 = ERRSUMseam2 + errseam2 * errseam2;
-                errsplus1 = max(splus8 - splus7, splus9 - splus7, 0.);
-                errsplus2 = max(splus7 - splus8, splus7 - splus9, 0.);
+                errsplus1 = max(max(splus8 - splus7, splus9 - splus7), 0.);
+                errsplus2 = max(max( splus7 - splus8, splus7 - splus9), 0. );
+                // std::cout << "diff: " << errsplus2 << '\n';
                 ERRSUMsplus1 = ERRSUMsplus1 + errsplus1 * errsplus1;
                 ERRSUMsplus2 = ERRSUMsplus2 + errsplus2 * errsplus2;
-                errsminus1 = max(sminus8 - sminus7, sminus9 - sminus7, 0.);
-                errsminus2 = max(sminus7 - sminus8, sminus7 - sminus9, 0.);
+                errsminus1 = max(max(sminus8 - sminus7, sminus9 - sminus7), 0.);
+                errsminus2 = max(max(sminus7 - sminus8, sminus7 - sminus9), 0.);
                 ERRSUMsminus1 = ERRSUMsminus1 + errsminus1 * errsminus1;
                 ERRSUMsminus2 = ERRSUMsminus2 + errsminus2 * errsminus2;
             }
@@ -978,6 +1014,7 @@ int main()
             ERRPCseam2 = ERRTOTseam2 / (seam7) * 100.;
             ERRTOTsplus1 = sqrt(ERRSUMsplus1);
             ERRTOTsplus2 = sqrt(ERRSUMsplus2);
+            //std::cout << ERRTOTsplus2 << '\n';
             ERRPCsplus1 = ERRTOTsplus1 / (splus7) * 100.;
             ERRPCsplus2 = ERRTOTsplus2 / (splus7) * 100.;
             ERRTOTsminus1 = sqrt(ERRSUMsminus1);
@@ -1004,9 +1041,13 @@ int main()
             sminus11 = str11 - sbar11;
             seam11 = -usea11 + dsea11;
 
-            std::cout << ERRTOTupv1 << " " << ERRTOTupv2 << '\n';
+            if (x == 0.199)
+            {
+                std::cout << nxch << ": " << ERRTOTsplus1 << " " << ERRTOTsplus2 << '\n';
+                std::cout << "> " << splus10 << ' ' << splus11 << '\n';
+            }
 
-            file << x << " "
+            file << std::setprecision(15) << x << " "
                 << 10. * pow((glu10 - glu11) / (ERRTOTg1 + ERRTOTg2),2) << " "
                 << 10. * pow((upv10 - upv11) / (ERRTOTupv1 + ERRTOTupv2),2) << " "
                 << 10. * pow((dnv10 - dnv11) / (ERRTOTdnv1 + ERRTOTdnv2),2) << " "
