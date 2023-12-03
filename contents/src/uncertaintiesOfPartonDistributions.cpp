@@ -776,14 +776,15 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
 
 
 void GetAllPDFs32(std::string prefix, int ih, double x, double q,
+    double* up, double* dn,
     double* upv, double* dnv, double* usea, double* dsea, double* str,
     double* sbar, double* chm, double* cbar, double* bot, double* bbar,
     double* glu, double* phot)
 {
 
     //   Quarks.
-    double dn{ GetOnePDF32(prefix, ih, x, q, 1) };
-    double up{ GetOnePDF32(prefix, ih, x, q, 2) };
+    *dn = GetOnePDF32(prefix, ih, x, q, 1);
+    *up = GetOnePDF32(prefix, ih, x, q, 2);
     *str = GetOnePDF32(prefix, ih, x, q, 3) ;
     *chm = GetOnePDF32(prefix, ih, x, q, 4) ;
     *bot = GetOnePDF32(prefix, ih, x, q, 5) ;
@@ -802,8 +803,8 @@ void GetAllPDFs32(std::string prefix, int ih, double x, double q,
 
 
     // Antiquarks = quarks - valence quarks.
-    *dsea = dn - *dnv;
-    *usea = up - *upv;
+    *dsea = *dn - *dnv;
+    *usea = *up - *upv;
     *sbar = *str - sv;
     *cbar = *chm - cv;
     *bbar = *bot - bv;
@@ -822,101 +823,140 @@ void GetAllPDFs32(std::string prefix, int ih, double x, double q,
 
 int main()
 {
-    std::ofstream file("../data/partonfrac.out");
+    constexpr int x_indice{ 2 };
 
-    int q2{};
-    double upv7{};
-    double dnv7{};
-    double usea7{};
-    double dsea7{};
-    double str7{};
-    double sbar7{};
-    double chm7{};
-    double cbar7{};
-    double bot7{};
-    double bbar7{};
-    double glu7{};
-    double phot7{};
+    std::ofstream file("../data/partonfrac" + std::to_string(x_indice) + ".out");
+
+    double q2{};
+    double up7{}, dn7{}, upv7{}, dnv7{}, usea7{}, dsea7{},
+        str7{}, sbar7{},
+        chm7{}, cbar7{}, bot7{}, bbar7{}, glu7{}, phot7{};
 
     std::string prefix{};
 
     double sea7, splus7, sminus7, seam7;
 
-    double ERRSUMg1{};
-    double ERRSUMg2{};
-    double ERRSUMupv1{};
-    double ERRSUMupv2{};
-    double ERRSUMdnv1{};
-    double ERRSUMdnv2{};
-    double ERRSUMsea1{};
-    double ERRSUMsea2{};
-    double ERRSUMseam1{};
-    double ERRSUMseam2{};
-    double ERRSUMsplus1{};
-    double ERRSUMsplus2{};
-    double ERRSUMsminus1{};
-    double ERRSUMsminus2{};
+    double ERRSUMg1{}, ERRSUMg2{}, ERRSUMupv1{}, ERRSUMupv2{},
+        ERRSUMdnv1{}, ERRSUMdnv2{}, ERRSUMsea1{}, ERRSUMsea2{},
+        ERRSUMseam1{}, ERRSUMseam2{}, ERRSUMsplus1{}, ERRSUMsplus2{},
+        ERRSUMsminus1{}, ERRSUMsminus2{}, ERRSUMup1{}, ERRSUMup2{},
+        ERRSUMdn1{}, ERRSUMdn2{}, ERRSUMstr1{}, ERRSUMstr2{},
+        ERRSUMchm1{}, ERRSUMchm2{}, ERRSUMbot1{}, ERRSUMbot2{},
+        ERRSUMusea1{}, ERRSUMusea2{}, ERRSUMdsea1{}, ERRSUMdsea2{},
+        ERRSUMsbar1{}, ERRSUMsbar2{}, ERRSUMcbar1{}, ERRSUMcbar2{},
+        ERRSUMbbar1{}, ERRSUMbbar2{};
 
     int iset1{};
     int iset2{};
 
-    double upv8{}, dnv8{}, usea8{}, dsea8{}, str8{},
+    double up8{}, dn8{},upv8{}, dnv8{}, usea8{}, dsea8{}, str8{},
         sbar8{}, chm8{}, cbar8{}, bot8{}, bbar8{}, glu8{}, phot8{};
     double sea8{}, splus8{}, sminus8{}, seam8{};
-    double upv9{}, dnv9{}, usea9{}, dsea9{}, str9{},
+    double up9{}, dn9{}, upv9{}, dnv9{}, usea9{}, dsea9{}, str9{},
         sbar9{}, chm9{}, cbar9{}, bot9{}, bbar9{}, glu9{}, phot9{};
     double sea9{}, splus9{}, sminus9{}, seam9{};
 
 
     double errg1, errg2, errupv1, errupv2, errdnv1, errdnv2,
         errsea1, errsea2, errseam1, errseam2,
-        errsplus1, errsplus2, errsminus1, errsminus2;
+        errsplus1, errsplus2, errsminus1, errsminus2, errup1,
+        errup2, errdn1, errdn2, errstr1, errstr2, errchm1,
+        errchm2, errbot1, errbot2, errusea1, errusea2, errdsea1,
+        errdsea2, errsbar1, errsbar2, errcbar1,
+        errcbar2, errbbar1, errbbar2;
 
     double ERRTOTg1, ERRTOTg2, ERRPCg1, ERRPCg2, ERRTOTupv1, ERRTOTupv2,
         ERRPCupv1, ERRPCupv2, ERRTOTdnv1, ERRTOTdnv2, ERRPCdnv1, ERRPCdnv2,
         ERRTOTsea1, ERRTOTsea2, ERRPCsea1, ERRPCsea2, ERRTOTseam1,
         ERRTOTseam2, ERRPCseam1, ERRPCseam2, ERRTOTsplus1, ERRTOTsplus2,
         ERRPCsplus1, ERRPCsplus2, ERRTOTsminus1, ERRTOTsminus2,
-        ERRPCsminus1, ERRPCsminus2;
+        ERRPCsminus1, ERRPCsminus2, ERRTOTup1, ERRTOTup2, ERRTOTdn1,
+        ERRTOTdn2, ERRTOTstr1, ERRTOTstr2, ERRTOTchm1, ERRTOTchm2,
+        ERRTOTbot1, ERRTOTbot2, ERRTOTusea1, ERRTOTusea2, ERRTOTdsea1,
+        ERRTOTdsea2, ERRTOTsbar1, ERRTOTsbar2, ERRTOTcbar1,
+        ERRTOTcbar2, ERRTOTbbar1, ERRTOTbbar2;
 
     double ifix{};
 
-    double upv10{}, dnv10{}, usea10{}, dsea10{}, str10{},
+    double up10{}, dn10{}, upv10{}, dnv10{}, usea10{}, dsea10{}, str10{},
         sbar10{}, chm10{}, cbar10{}, bot10{}, bbar10{}, glu10{}, phot10{};
     double sea10{}, splus10{}, sminus10{}, seam10{};
-    double upv11{}, dnv11{}, usea11{}, dsea11{}, str11{},
+    double up11{}, dn11{}, upv11{}, dnv11{}, usea11{}, dsea11{}, str11{},
         sbar11{}, chm11{}, cbar11{}, bot11{}, bbar11{}, glu11{}, phot11{};
     double sea11{}, splus11{}, sminus11{}, seam11{};
 
-
+    /*
     std::vector<double> xczbin{ 0.00001,
         0.00003, 0.00007, 0.00018, 0.00035, 0.0006,
         0.001, 0.0015, 0.003, 0.006, 0.012, 0.02, 0.030,
         0.050, 0.080, 0.10, 0.199, 0.3, 0.4, 0.5, 0.7,
         0.85, 0.90, 0.95, 0.98 };
+        */
+    std::vector<double> xczbin{ 0.00017,
+        0.0002, 0.00025, 0.0003, 0.00035, 0.0006,
+        0.001, 0.0015, 0.003, 0.006, 0.012, 0.02, 0.030,
+        0.050, 0.080, 0.10, 0.199, 0.3, 0.4, 0.5, 0.7,
+        0.85, 0.90, 0.95, 0.98 };
+
+
+
 
 
     double q{};
     for (int nq{ 1 }; nq <= 6; ++nq)
     {
-        if (nq == 1) q2 = 1;
-        else if (nq == 2) q2 = 2;
-        else if (nq == 3) q2 = 12;
-        else if (nq == 4) q2 = 60;
-        else if (nq == 5) q2 = 200;
-        else if (nq == 6) q2 = 650;
+        if (nq == 1) 
+        { 
+            q2 = 80.;
+            if (x_indice == 2)
+            {
+                for (int i{ 0 }; i < xczbin.size(); ++i)
+                {
+                    xczbin[i] = 80. * 80. / (xczbin[i] * 8e+3 * 8e+3);
+                }
+                if (xczbin[0] > 1)
+                {
+                    std::cout << "Major problem: x>1: " << xczbin[0] << '\n';
+                    return 2;
+                }
+            }
+        }
+        else if (nq == 2)
+        {
+            q2 = 91.;
+            if (x_indice == 2)
+            {
+                for (int i{ 0 }; i < xczbin.size(); ++i)
+                {
+                    xczbin[i] *= 91.*91. / (80.*80.);
+                }
+                if (xczbin[0] > 1)
+                {
+                    std::cout << "Major problem: x>1: " << xczbin[0] << '\n';
+                    return 2;
+                }
+            }
+        }
+        else if (nq == 3) q2 = 12.;
+        else if (nq == 4) q2 = 60.;
+        else if (nq == 5) q2 = 200.;
+        else if (nq == 6) q2 = 650.;
         q = sqrt(q2);
+
+
+
 
         int iset{ 0 };
 
         
 
-        for (int nxch{ 0 }; nxch < 22; ++nxch)
+        for (int nxch{ 0 }; nxch < xczbin.size(); ++nxch)
         {
+
             double x{ xczbin[nxch] };
             // Prefix for the grid files.
             prefix = "../data/msht/msht/msht20nnlo_as118_internal";
-            GetAllPDFs32(prefix, iset, x, q, &upv7, &dnv7, &usea7, &dsea7, &str7,
+            GetAllPDFs32(prefix, iset, x, q, &up7, &dn7, &upv7, &dnv7, &usea7, &dsea7, &str7,
                 &sbar7, &chm7, &cbar7, &bot7, &bbar7, &glu7, &phot7);
             sea7 = 2. * usea7 + 2. * dsea7 + str7 + sbar7;
             splus7 = str7 + sbar7;
@@ -938,6 +978,30 @@ int main()
             ERRSUMsminus1 = 0.;
             ERRSUMsminus2 = 0.;
 
+            // Quarks
+            ERRSUMup1 = 0.;
+            ERRSUMup2 = 0.;
+            ERRSUMdn1 = 0.;
+            ERRSUMdn2 = 0.;
+            ERRSUMstr1 = 0.;
+            ERRSUMstr2 = 0.;
+            ERRSUMchm1 = 0.;
+            ERRSUMchm2 = 0.;
+            ERRSUMbot1 = 0.;
+            ERRSUMbot2 = 0.;
+
+            // Antiquarks
+            ERRSUMusea1 = 0.;
+            ERRSUMusea2 = 0.;
+            ERRSUMdsea1 = 0.;
+            ERRSUMdsea2 = 0.;
+            ERRSUMsbar1 = 0.;
+            ERRSUMsbar2 = 0.;
+            ERRSUMcbar1 = 0.;
+            ERRSUMcbar2 = 0.;
+            ERRSUMbbar1 = 0.;
+            ERRSUMbbar2 = 0.;
+
             for (int nmode{ 1 }; nmode <= 32; ++nmode)
             {
                 //if (x==0.199) std::cout << nmode << '\n';
@@ -945,7 +1009,7 @@ int main()
                 prefix = "../data/msht/msht/msht20nnlo_as118_internal";  // prefix for the grid files
                 iset1 = 2 * nmode - 1;
                 iset2 = 2 * nmode;
-                GetAllPDFs32(prefix, iset1, x, q, &upv8, &dnv8, &usea8, &dsea8, &str8,
+                GetAllPDFs32(prefix, iset1, x, q, &up8,&dn8, &upv8, &dnv8, &usea8, &dsea8, &str8,
                     &sbar8, &chm8, &cbar8, &bot8, &bbar8, &glu8, &phot8);
 
                 //std::cout << upv7 << " " << upv8 << '\n';
@@ -953,7 +1017,7 @@ int main()
                 seam8 = -usea8 + dsea8;
                 splus8 = str8 + sbar8;
                 sminus8 = str8 - sbar8;
-                GetAllPDFs32(prefix, iset2, x, q, &upv9, &dnv9, &usea9, &dsea9, &str9,
+                GetAllPDFs32(prefix, iset2, x, q, &up9,&dn9,&upv9, &dnv9, &usea9, &dsea9, &str9,
                     &sbar9, &chm9, &cbar9, &bot9, &bbar9, &glu9, &phot9);
                 sea9 = 2. * usea9 + 2. * dsea9 + str9 + sbar9;
                 splus9 = str9 + sbar9;
@@ -966,8 +1030,6 @@ int main()
                 ERRSUMg2 = ERRSUMg2 + errg2 * errg2;
                 errupv1 = max(max(upv8 - upv7, upv9 - upv7), 0.);
                 errupv2 = max(max(upv7 - upv8, upv7 - upv9), 0.);
-                //std::cout << errupv1 << " " << errupv2 << '\n';
-
                 ERRSUMupv1 = ERRSUMupv1 + errupv1 * errupv1;
                 ERRSUMupv2 = ERRSUMupv2 + errupv2 * errupv2;
                 errdnv1 = max(max(dnv8 - dnv7, dnv9 - dnv7), 0.);
@@ -984,13 +1046,56 @@ int main()
                 ERRSUMseam2 = ERRSUMseam2 + errseam2 * errseam2;
                 errsplus1 = max(max(splus8 - splus7, splus9 - splus7), 0.);
                 errsplus2 = max(max( splus7 - splus8, splus7 - splus9), 0. );
-                // std::cout << "diff: " << errsplus2 << '\n';
                 ERRSUMsplus1 = ERRSUMsplus1 + errsplus1 * errsplus1;
                 ERRSUMsplus2 = ERRSUMsplus2 + errsplus2 * errsplus2;
                 errsminus1 = max(max(sminus8 - sminus7, sminus9 - sminus7), 0.);
                 errsminus2 = max(max(sminus7 - sminus8, sminus7 - sminus9), 0.);
                 ERRSUMsminus1 = ERRSUMsminus1 + errsminus1 * errsminus1;
                 ERRSUMsminus2 = ERRSUMsminus2 + errsminus2 * errsminus2;
+
+                // Quarks
+                errup1 = max(max(up8 - up7, up9 - up7), 0.);
+                errup2 = max(max(up7 - up8, up7 - up9), 0.);
+                ERRSUMup1 = ERRSUMup1 + errup1 * errup1;
+                ERRSUMup2 = ERRSUMup2 + errup2 * errup2;
+                errdn1 = max(max(dn8 - dn7, dn9 - dn7), 0.);
+                errdn2 = max(max(dn7 - dn8, dn7 - dn9), 0.);
+                ERRSUMdn1 = ERRSUMdn1 + errdn1 * errdn1;
+                ERRSUMdn2 = ERRSUMdn2 + errdn2 * errdn2;
+                errchm1 = max(max(chm8 - chm7, chm9 - chm7), 0.);
+                errchm2 = max(max(chm7 - chm8, chm7 - chm9), 0.);
+                ERRSUMchm1 = ERRSUMchm1 + errchm1 * errchm1;
+                ERRSUMchm2 = ERRSUMchm2 + errchm2 * errchm2;
+                errstr1 = max(max(str8 - str7, str9 - str7), 0.);
+                errstr2 = max(max(str7 - str8, str7 - str9), 0.);
+                ERRSUMstr1 = ERRSUMstr1 + errstr1 * errstr1;
+                ERRSUMstr2 = ERRSUMstr2 + errstr2 * errstr2;
+                errbot1 = max(max(bot8 - bot7, bot9 - bot7), 0.);
+                errbot2 = max(max(bot7 - bot8, bot7 - bot9), 0.);
+                ERRSUMbot1 = ERRSUMbot1 + errbot1 * errbot1;
+                ERRSUMbot2 = ERRSUMbot2 + errbot2 * errbot2;
+
+                // Antiquarks.
+                errusea1 = max(max(usea8 - usea7, usea9 - usea7), 0.);
+                errusea2 = max(max(usea7 - usea8, usea7 - usea9), 0.);
+                ERRSUMusea1 = ERRSUMusea1 + errusea1 * errusea1;
+                ERRSUMusea2 = ERRSUMusea2 + errusea2 * errusea2;
+                errdsea1 = max(max(dsea8 - dsea7, dsea9 - dsea7), 0.);
+                errdsea2 = max(max(dsea7 - dsea8, dsea7 - dsea9), 0.);
+                ERRSUMdsea1 = ERRSUMdsea1 + errdsea1 * errdsea1;
+                ERRSUMdsea2 = ERRSUMdsea2 + errdsea2 * errdsea2;
+                errcbar1 = max(max(cbar8 - cbar7, cbar9 - cbar7), 0.);
+                errcbar2 = max(max(cbar7 - cbar8, cbar7 - cbar9), 0.);
+                ERRSUMcbar1 = ERRSUMcbar1 + errcbar1 * errcbar1;
+                ERRSUMcbar2 = ERRSUMcbar2 + errcbar2 * errcbar2;
+                errsbar1 = max(max(sbar8 - sbar7, sbar9 - sbar7), 0.);
+                errsbar2 = max(max(sbar7 - sbar8, sbar7 - sbar9), 0.);
+                ERRSUMsbar1 = ERRSUMsbar1 + errsbar1 * errsbar1;
+                ERRSUMsbar2 = ERRSUMsbar2 + errsbar2 * errsbar2;
+                errbbar1 = max(max(bbar8 - bbar7, bbar9 - bbar7), 0.);
+                errbbar2 = max(max(bbar7 - bbar8, bbar7 - bbar9), 0.);
+                ERRSUMbbar1 = ERRSUMbbar1 + errbbar1 * errbbar1;
+                ERRSUMbbar2 = ERRSUMbbar2 + errbbar2 * errbbar2;
             }
             ERRTOTg1 = sqrt(ERRSUMg1);
             ERRTOTg2 = sqrt(ERRSUMg2);
@@ -1014,7 +1119,6 @@ int main()
             ERRPCseam2 = ERRTOTseam2 / (seam7) * 100.;
             ERRTOTsplus1 = sqrt(ERRSUMsplus1);
             ERRTOTsplus2 = sqrt(ERRSUMsplus2);
-            //std::cout << ERRTOTsplus2 << '\n';
             ERRPCsplus1 = ERRTOTsplus1 / (splus7) * 100.;
             ERRPCsplus2 = ERRTOTsplus2 / (splus7) * 100.;
             ERRTOTsminus1 = sqrt(ERRSUMsminus1);
@@ -1022,18 +1126,45 @@ int main()
             ERRPCsminus1 = ERRTOTsminus1 / (sminus7) * 100.;
             ERRPCsminus2 = ERRTOTsminus2 / (sminus7) * 100.;
 
+            // Quarks
+            ERRTOTup1 = sqrt(ERRSUMup1);
+            ERRTOTup2 = sqrt(ERRSUMup2);
+            ERRTOTdn1 = sqrt(ERRSUMdn1);
+            ERRTOTdn2 = sqrt(ERRSUMdn2);
+            ERRTOTchm1 = sqrt(ERRSUMchm1);
+            ERRTOTchm2 = sqrt(ERRSUMchm2);
+            ERRTOTstr1 = sqrt(ERRSUMstr1);
+            ERRTOTstr2 = sqrt(ERRSUMstr2);
+            ERRTOTbot1 = sqrt(ERRSUMbot1);
+            ERRTOTbot2 = sqrt(ERRSUMbot2);
+
+            // Antiquarks.
+            ERRTOTusea1 = sqrt(ERRSUMusea1);
+            ERRTOTusea2 = sqrt(ERRSUMusea2);
+            ERRTOTdsea1 = sqrt(ERRSUMdsea1);
+            ERRTOTdsea2 = sqrt(ERRSUMdsea2);
+            ERRTOTsbar1 = sqrt(ERRSUMsbar1);
+            ERRTOTsbar2 = sqrt(ERRSUMsbar2);
+            ERRTOTcbar1 = sqrt(ERRSUMcbar1);
+            ERRTOTcbar2 = sqrt(ERRSUMcbar2);
+            ERRTOTbbar1 = sqrt(ERRSUMbbar1);
+            ERRTOTbbar2 = sqrt(ERRSUMbbar2);
+
+
+
+
             ifix = 2;
 
 
 
-            GetAllPDFs32(prefix, ifix - 1, x, q, &upv10, &dnv10, &usea10, &dsea10,
+            GetAllPDFs32(prefix, ifix - 1, x, q, &up10,&dn10, &upv10, &dnv10, &usea10, &dsea10,
                 &str10, &sbar10,
                 &chm10, &cbar10, &bot10, &bbar10, &glu10, &phot10);
             sea10 = 2. * usea10 + 2. * dsea10 + str10 + sbar10;
             splus10 = str10 + sbar10;
             sminus10 = str10 - sbar10;
             seam10 = -usea10 + dsea10;
-            GetAllPDFs32(prefix, ifix, x, q, &upv11, &dnv11, &usea11, &dsea11,
+            GetAllPDFs32(prefix, ifix, x, q, &up11,&dn11, &upv11, &dnv11, &usea11, &dsea11,
                 &str11, &sbar11,
                 &chm11, &cbar11, &bot11, &bbar11, &glu11, &phot11);
             sea11 = 2. * usea11 + 2. * dsea11 + str11 + sbar11;
@@ -1048,13 +1179,28 @@ int main()
             }
 
             file << std::setprecision(15) << x << " "
-                << 10. * pow((glu10 - glu11) / (ERRTOTg1 + ERRTOTg2),2) << " "
+                // Quarks
+                << 10. * pow((up10 - up11) / (ERRTOTup1 + ERRTOTup2), 2) << " "
+                << 10. * pow((dn10 - dn11) / (ERRTOTdn1 + ERRTOTdn2), 2) << " "
+                << 10. * pow((chm10 - chm11) / (ERRTOTchm1 + ERRTOTchm2), 2) << " "
+                << 10. * pow((str10 - str11) / (ERRTOTstr1 + ERRTOTstr2), 2) << " "
+                << 10. * pow((bot10 - bot11) / (ERRTOTbot1 + ERRTOTbot2), 2) << " "
+                // Antiquarks
+                << 10. * pow((usea10 - usea11) / (ERRTOTusea1 + ERRTOTusea2), 2) << " "
+                << 10. * pow((dsea10 - dsea11) / (ERRTOTdsea1 + ERRTOTdsea2), 2) << " "
+                << 10. * pow((cbar10 - cbar11) / (ERRTOTcbar1 + ERRTOTcbar2), 2) << " "
+                << 10. * pow((sbar10 - sbar11) / (ERRTOTsbar1 + ERRTOTsbar2), 2) << " "
+                << 10. * pow((bbar10 - bbar11) / (ERRTOTbbar1 + ERRTOTbbar2), 2) << " "
+
+                << 10. * pow((glu10 - glu11) / (ERRTOTg1 + ERRTOTg2), 2) << "\n";
+                /*
                 << 10. * pow((upv10 - upv11) / (ERRTOTupv1 + ERRTOTupv2),2) << " "
                 << 10. * pow((dnv10 - dnv11) / (ERRTOTdnv1 + ERRTOTdnv2),2) << " "
                 << 10. * pow((sea10 - sea11) / (ERRTOTsea1 + ERRTOTsea2),2) << " "
                 << 10. * pow((seam10 - seam11) / (ERRTOTseam1 + ERRTOTseam2),2) << " "
                 << 10. * pow((splus10 - splus11) / (ERRTOTsplus1 + ERRTOTsplus2),2) << " "
                 << 10. * pow((sminus10 - sminus11) / (ERRTOTsminus1 + ERRTOTsminus2),2) << '\n';
+                */
         }
     }
 
