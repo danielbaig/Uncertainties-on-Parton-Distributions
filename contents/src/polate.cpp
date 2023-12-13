@@ -140,13 +140,13 @@ double InterpolatePDF(int ip, int np, int ih, int nhess, double x, double y,
             + (*cc)(ip-1, ih, n-1, m-1, l-1, 0);
     }
 
-    //if (ip == 9 && abs(pow(10.,x) - 0.199) < 1e-5)
-    //{
-        //std::cout << "interp: " << (*xx)(28 - 1) << ' ' << (*yy)(28 - 1) << '\n';
-       // std::cout << "z: " << n << ',' << m << ": " << z << '\n';
-        //std::cout << "cc: " << (*cc)(ip - 1, ih, n - 1, m - 1, 0, 3) 
-        //    << " " << t << " " << u << '\n';
-    //}
+    if (ip == 9 && x==0.)
+    {
+        std::cout << "interp: " << (*xx)(28 - 1) << ' ' << (*yy)(28 - 1) << '\n';
+        std::cout << "z: " << n << ',' << m << ": " << z << '\n';
+        std::cout << "cc: " << (*cc)(ip - 1, ih, n - 1, m - 1, 0, 3) 
+            << " " << t << " " << u << '\n';
+    }
 
 
     return z;

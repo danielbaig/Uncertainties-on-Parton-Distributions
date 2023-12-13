@@ -254,10 +254,10 @@ void InitialisePDF(int ip, int np, int ih, int nhess, int nx, int my, int myc0, 
 
 
 
-int nx{ 64 };
-int nq{ 48 };
-int np{ 12 };
-int nhess{ 2 * 32 };
+constexpr int nx{ 64 };
+constexpr int nq{ 48 };
+constexpr int np{ 12 };
+const int nhess{ 2 * 32 };
 
 std::vector<std::string> oldprefix(nhess+1);
 int nqc0{};
@@ -763,11 +763,12 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
 
     // if (f==9) std::cout << f << " " << res << '\n';
 
-
-    //if (x == 0.199 && f==9)
-    //{
-      //  std::cout << f << " res " << res << '\n';
-    //}
+    /*
+    if (x==1.)
+    {
+        std::cout << f << ',' << x << " res " << res << '\n';
+    }
+    */
     
 
     return res;
@@ -796,9 +797,9 @@ void GetAllPDFs32(std::string prefix, int ih, double x, double q,
     double cv{ GetOnePDF32(prefix, ih, x, q, 10) };
     double bv{ GetOnePDF32(prefix, ih, x, q, 11) };
 
-    //if (x == 0.199)
+    //if (x == 1.)
     //{
-      //  std::cout << *str << " " << sv << "\n\n";
+    //    std::cout << *up << " " << *dn << "\n\n";
     //}
 
 
@@ -825,7 +826,89 @@ int main()
 {
     constexpr int x_indice{ 2 };
 
+    // Read in parameters.
+    std::ifstream paramFile("../data/parameterFile.txt");
+    std::string line{};
+    constexpr int maxFileSize{ 1000 };
+    int lineCount{ 0 };
+
+    // Variables to assign.
+    double sqrtS{ 0. };
+    double m_W{ 0. };
+    double m_Z{ 0. };
+    double Qmin{ 0. };
+    double Qmax{ 0. };
+    int numQ{ 0 };
+
+    while (lineCount < maxFileSize && !paramFile.eof())
+    {
+        paramFile >> line;
+        ++lineCount;
+
+        if (line == "s")
+        {
+            for (int i{ 0 }; i < 3; ++i)
+            {
+                paramFile >> line;
+                ++lineCount;
+            }
+            sqrtS = std::stod(line)*1e+3; // [GeV]
+        }
+        else if (line == "m_W")
+        {
+            for (int i{ 0 }; i < 3; ++i)
+            {
+                paramFile >> line;
+                ++lineCount;
+            }
+            m_W = std::stod(line);
+        }
+        else if (line == "m_Z")
+        {
+            for (int i{ 0 }; i < 3; ++i)
+            {
+                paramFile >> line;
+                ++lineCount;
+            }
+            m_Z = std::stod(line);
+        }
+        else if (line == "Qmin")
+        {
+            for (int i{ 0 }; i < 3; ++i)
+            {
+                paramFile >> line;
+                ++lineCount;
+            }
+            Qmin = std::stod(line);
+        }
+        else if (line == "Qmax")
+        {
+            for (int i{ 0 }; i < 3; ++i)
+            {
+                paramFile >> line;
+                ++lineCount;
+            }
+            Qmax = std::stod(line);
+        }
+        else if (line == "numQ")
+        {
+            for (int i{ 0 }; i < 2; ++i)
+            {
+                paramFile >> line;
+                ++lineCount;
+            }
+            numQ = std::stoi(line);
+        }
+    }
+
+
+    paramFile.close();
+
+    // Photon Q^2.
+    Eigen::VectorXd Qsqrds{ Eigen::VectorXd::LinSpaced(numQ, Qmin*Qmin, Qmax*Qmax) };
+
     std::ofstream file("../data/partonfrac" + std::to_string(x_indice) + ".out");
+    std::ofstream PDFfile("../data/PDF" + std::to_string(x_indice) + ".out");
 
     double q2{};
     double up7{}, dn7{}, upv7{}, dnv7{}, usea7{}, dsea7{},
@@ -849,7 +932,7 @@ int main()
     int iset1{};
     int iset2{};
 
-    double up8{}, dn8{},upv8{}, dnv8{}, usea8{}, dsea8{}, str8{},
+    double up8{}, dn8{}, upv8{}, dnv8{}, usea8{}, dsea8{}, str8{},
         sbar8{}, chm8{}, cbar8{}, bot8{}, bbar8{}, glu8{}, phot8{};
     double sea8{}, splus8{}, sminus8{}, seam8{};
     double up9{}, dn9{}, upv9{}, dnv9{}, usea9{}, dsea9{}, str9{},
@@ -892,58 +975,57 @@ int main()
         0.050, 0.080, 0.10, 0.199, 0.3, 0.4, 0.5, 0.7,
         0.85, 0.90, 0.95, 0.98 };
         */
-    std::vector<double> xczbin{ 0.00017,
-        0.0002, 0.00025, 0.0003, 0.00035, 0.0006,
-        0.001, 0.0015, 0.003, 0.006, 0.012, 0.02, 0.030,
-        0.050, 0.080, 0.10, 0.199, 0.3, 0.4, 0.5, 0.7,
-        0.85, 0.90, 0.95, 0.98 };
+    constexpr int numX{ 25 };
+    const double xmax{ 1. };
+    const double x1min{ Qmax * Qmax / (sqrtS*sqrtS*xmax) };
 
 
+    Eigen::VectorXd xczbin_temp(pow(10.,Eigen::VectorXd::LinSpaced(numX, log10(x1min), log10(xmax)).array()));
 
+
+    // xczbin_temp << 0.0005,
+       // 0.0006, 0.0007, 0.0008, 0.0009, 0.001,
+        //0.0012, 0.0015, 0.003, 0.006, 0.012, 0.02, 0.030,
+        //0.050, 0.080, 0.10, 0.199, 0.3, 0.4, 0.5, 0.7,
+        //0.85, 0.90, 0.95, 0.98;
+
+    Eigen::VectorXd xczbin(xczbin_temp.size());
 
 
     double q{};
-    for (int nq{ 1 }; nq <= 6; ++nq)
+    for (int nq{ 0 }; nq < 2+numQ; ++nq)
     {
-        if (nq == 1) 
+
+        if (nq == 0) 
         { 
-            q2 = 80.;
-            if (x_indice == 2)
-            {
-                for (int i{ 0 }; i < xczbin.size(); ++i)
-                {
-                    xczbin[i] = 80. * 80. / (xczbin[i] * 8e+3 * 8e+3);
-                }
-                if (xczbin[0] > 1)
-                {
-                    std::cout << "Major problem: x>1: " << xczbin[0] << '\n';
-                    return 2;
-                }
-            }
+            q2 = m_W*m_W;
         }
-        else if (nq == 2)
+        else if (nq == 1)
         {
-            q2 = 91.;
-            if (x_indice == 2)
-            {
-                for (int i{ 0 }; i < xczbin.size(); ++i)
-                {
-                    xczbin[i] *= 91.*91. / (80.*80.);
-                }
-                if (xczbin[0] > 1)
-                {
-                    std::cout << "Major problem: x>1: " << xczbin[0] << '\n';
-                    return 2;
-                }
-            }
+            q2 = m_Z*m_Z;
         }
-        else if (nq == 3) q2 = 12.;
-        else if (nq == 4) q2 = 60.;
-        else if (nq == 5) q2 = 200.;
-        else if (nq == 6) q2 = 650.;
+        else
+        {
+            q2 = Qsqrds(nq - 2);
+        }
+
         q = sqrt(q2);
 
+        if (x_indice == 2)
+        {
+            xczbin = q2 / (xczbin_temp.array() * sqrtS * sqrtS);
 
+            if (xczbin(0) > 1)
+            {
+                std::cout << "Major problem: x>1: " << xczbin(0) << '\n';
+                return -2;
+            }
+        }
+        else
+        {
+            xczbin = xczbin_temp;
+        }
+        // std::cout << xczbin(0) << '\n';
 
 
         int iset{ 0 };
@@ -1172,11 +1254,11 @@ int main()
             sminus11 = str11 - sbar11;
             seam11 = -usea11 + dsea11;
 
-            if (x == 0.199)
-            {
-                std::cout << nxch << ": " << ERRTOTsplus1 << " " << ERRTOTsplus2 << '\n';
-                std::cout << "> " << splus10 << ' ' << splus11 << '\n';
-            }
+            //if (x == 0.199)
+            //{
+            //    std::cout << nxch << ": " << ERRTOTsplus1 << " " << ERRTOTsplus2 << '\n';
+            //    std::cout << "> " << splus10 << ' ' << splus11 << '\n';
+            //}
 
             file << std::setprecision(15) << x << " "
                 // Quarks
@@ -1201,10 +1283,28 @@ int main()
                 << 10. * pow((splus10 - splus11) / (ERRTOTsplus1 + ERRTOTsplus2),2) << " "
                 << 10. * pow((sminus10 - sminus11) / (ERRTOTsminus1 + ERRTOTsminus2),2) << '\n';
                 */
+
+            PDFfile << std::setprecision(15) << x << " "
+                // Quarks
+                << up7 << " "
+                << dn7 << " "
+                << chm7 << " "
+                << str7 << " "
+                << bot7 << " "
+                // Antiquarks
+                << usea7 << " "
+                << dsea7 << " "
+                << cbar7 << " "
+                << sbar7 << " "
+                << bbar7 << " "
+
+                << glu7 << "\n";
+
         }
     }
 
     file.close();
+    PDFfile.close();
     return 0;
 
 }

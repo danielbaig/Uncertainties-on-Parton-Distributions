@@ -1,0 +1,9 @@
+# General.
+s [TeV^2] = 7
+m_W [GeV] = 80
+m_Z [GeV] = 91
+
+# Photon.
+Qmin [GeV] = 46.
+Qmax [GeV] = 150.
+numQ = 10
