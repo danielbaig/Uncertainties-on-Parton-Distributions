@@ -12,6 +12,7 @@ class CrossSection:
     downType_i = slice(2,5)
     upTypeBar_i = slice(5,7)
     downTypeBar_i = slice(7,10)
+    gluon_i = 10
     
     
     
