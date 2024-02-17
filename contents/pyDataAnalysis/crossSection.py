@@ -31,6 +31,9 @@ class CrossSection:
         """
                  
 
+        if data1.shape[1] != data2.shape[1]:
+            raise Exception('Mismatch between num x1 and num x2,'
+                            + ' ensure PDF generation has been run for both x1 and x2.')
         self.data = np.asarray((data1,data2))
         self.x1 = x1
         self.x2s = x2s

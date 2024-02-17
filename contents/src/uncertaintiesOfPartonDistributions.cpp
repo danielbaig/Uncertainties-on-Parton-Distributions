@@ -824,7 +824,7 @@ void GetAllPDFs32(std::string prefix, int ih, double x, double q,
 
 int main()
 {
-    constexpr int x_indice{ 2 };
+    constexpr int x_indice{ 2 }; // 1 or 2
 
     // Read in parameters.
     std::ifstream paramFile("../data/parameterFile.txt");
@@ -975,7 +975,7 @@ int main()
         0.050, 0.080, 0.10, 0.199, 0.3, 0.4, 0.5, 0.7,
         0.85, 0.90, 0.95, 0.98 };
         */
-    constexpr int numX{ 25 };
+    constexpr int numX{ 100 };
     const double xmax{ 1. };
     const double x1min{ Qmax * Qmax / (sqrtS*sqrtS*xmax) };
 
