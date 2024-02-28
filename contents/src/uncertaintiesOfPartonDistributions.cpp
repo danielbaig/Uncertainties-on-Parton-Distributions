@@ -16,6 +16,10 @@
 #include "polate.h"
 #include "deriv_locx.h"
 
+/*
+* Adapted from the following written in Fortran.
+*/
+
 /*********************************************************************
 **
 * Program for generating Electromagnetic Structure Functions using*
@@ -38,14 +42,6 @@
 void InitialisePDF(int ip, int np, int ih, int nhess, int nx, int my, int myc0, int myb0,
     Eigen::VectorXd xx, Eigen::VectorXd yy, Eigen::Tensor<double, 3> ff, Eigen::Tensor<double, 6>* cc)
 {
-    //integer nhess, ih, nx, my, myc0, myb0, j, k, l, m, n, ip, np
-    /*
-    double precision xx(nx), yy(my), ff(np, nx, my),
-        & ff1(nx, my), ff2(nx, my), ff12(nx, my), ff21(nx, my),
-        & yy0(4), yy1(4), yy2(4), yy12(4), z(16),
-        & cl(16), cc(np, 0:nhess, nx, my, 4, 4), iwt(16, 16),
-        & polderiv1, polderiv2, polderiv3, d1, d2, d1d2, xxd
-        */
 
     Eigen::MatrixXd ff1(nx, my);
     Eigen::MatrixXd ff2(nx, my);
@@ -216,15 +212,9 @@ void InitialisePDF(int ip, int np, int ih, int nhess, int nx, int my, int myc0, 
                 for (int k{ 1 }; k <= 16; ++k)
                 {
                     xxd = xxd + iwt(l-1, k-1) * z(k-1);
-                    //std::cout << "iwt: " << k
-                      //  << "," << l << " "
-                        //<< iwt(l-1, k-1) << '-' 
-                        //<< z(k-1)
-                        //<< '\n';
                 }
                 cl(l-1) = xxd;
 
-                //std::cout << cl(l - 1) << '\n';
             }
             int l{ 0 };
             for (int k{ 1 }; k <= 4; ++k)
@@ -234,7 +224,6 @@ void InitialisePDF(int ip, int np, int ih, int nhess, int nx, int my, int myc0, 
                     ++l;
                     
                     (*cc)(ip-1, ih, n-1, m-1, k-1, j-1) = cl(l-1);
-                    //if (cl(l-1) > 0.1) std::cout << cc(ip - 1, ih, n - 1, m - 1, k - 1, j - 1) << '\n';
                 }
             }
             if (ih == -1)
@@ -286,9 +275,6 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
     double qsqmin{ 1. };
     double qsqmax{ 1e+9 };
     double eps{ 1e-6 };
-
-
-
 
 
     std::string set{};
@@ -559,7 +545,6 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
                     std::cerr << "Error in GetOnePDF reading " << filename << '\n';
                     return -1;
                 }
-                // std::cout << n << " " << m << " ff " << ff(0, n - 1, m - 1) << '\n';
             }
         }
 
@@ -586,16 +571,12 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
         for (int n{ 1 }; n <= nx; ++n)
         {
             xxl(n - 1) = log10(xx(n - 1));
-            //std::cout << xxl(n - 1) << ',';
         }
-        //std::cout << '\n' << x << "x\n";
 
         for (int m{ 1 }; m <= nq; ++m)
         {
             qql(m - 1) = log10(qq(m - 1));
-            //std::cout << qql(m - 1) << ',';
         }
-        //std::cout << '\n';
 
 
         //   Initialise all parton flavours.
@@ -610,14 +591,6 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
         //   ... End of initialisation for eigenvector set "ih".
     }
 
-    //if (ih == 64 && f==9 && x==0.199)
-    //{
-      //  std::cout << "xx: " << xxl(28 - 1) << ' ' << xx(28 - 1) << '\n';
-      //  for (int blip{ 1 }; blip <= nq; ++blip)
-        //{
-            //std::cout << qql(blip-1) << '\n';
-        //}
-    //}
     
 
     double qsq{ q * q };
@@ -660,7 +633,6 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
         if (fatal) return -1;
     }
 
-    // std::cout << "cc(): " << cc(ip - 1, ih - 1, 5, 0, 3, 0) << '\n';
 
 
     if (x <= 0. || x > xmax || q <= 0.)
@@ -761,14 +733,6 @@ double GetOnePDF32(std::string prefix, int ih, double x, double q, int f)
         }
     }
 
-    // if (f==9) std::cout << f << " " << res << '\n';
-
-    /*
-    if (x==1.)
-    {
-        std::cout << f << ',' << x << " res " << res << '\n';
-    }
-    */
     
 
     return res;
@@ -797,10 +761,6 @@ void GetAllPDFs32(std::string prefix, int ih, double x, double q,
     double cv{ GetOnePDF32(prefix, ih, x, q, 10) };
     double bv{ GetOnePDF32(prefix, ih, x, q, 11) };
 
-    //if (x == 1.)
-    //{
-    //    std::cout << *up << " " << *dn << "\n\n";
-    //}
 
 
     // Antiquarks = quarks - valence quarks.
@@ -810,7 +770,6 @@ void GetAllPDFs32(std::string prefix, int ih, double x, double q,
     *cbar = *chm - cv;
     *bbar = *bot - bv;
 
-    // std::cout << *dsea << ' ' << *usea << ' ' << *sbar << '\n';
 
     // Gluon.
     *glu = GetOnePDF32(prefix, ih, x, q, 0);
@@ -968,13 +927,7 @@ int main()
         sbar11{}, chm11{}, cbar11{}, bot11{}, bbar11{}, glu11{}, phot11{};
     double sea11{}, splus11{}, sminus11{}, seam11{};
 
-    /*
-    std::vector<double> xczbin{ 0.00001,
-        0.00003, 0.00007, 0.00018, 0.00035, 0.0006,
-        0.001, 0.0015, 0.003, 0.006, 0.012, 0.02, 0.030,
-        0.050, 0.080, 0.10, 0.199, 0.3, 0.4, 0.5, 0.7,
-        0.85, 0.90, 0.95, 0.98 };
-        */
+
     constexpr int numX{ 100 };
     const double xmax{ 1. };
     const double x1min{ Qmax * Qmax / (sqrtS*sqrtS*xmax) };
@@ -982,12 +935,6 @@ int main()
 
     Eigen::VectorXd xczbin_temp(pow(10.,Eigen::VectorXd::LinSpaced(numX, log10(x1min), log10(xmax)).array()));
 
-
-    // xczbin_temp << 0.0005,
-       // 0.0006, 0.0007, 0.0008, 0.0009, 0.001,
-        //0.0012, 0.0015, 0.003, 0.006, 0.012, 0.02, 0.030,
-        //0.050, 0.080, 0.10, 0.199, 0.3, 0.4, 0.5, 0.7,
-        //0.85, 0.90, 0.95, 0.98;
 
     Eigen::VectorXd xczbin(xczbin_temp.size());
 
@@ -1025,7 +972,6 @@ int main()
         {
             xczbin = xczbin_temp;
         }
-        // std::cout << xczbin(0) << '\n';
 
 
         int iset{ 0 };
@@ -1086,7 +1032,6 @@ int main()
 
             for (int nmode{ 1 }; nmode <= 32; ++nmode)
             {
-                //if (x==0.199) std::cout << nmode << '\n';
 
                 prefix = "../data/msht/msht/msht20nnlo_as118_internal";  // prefix for the grid files
                 iset1 = 2 * nmode - 1;
@@ -1094,7 +1039,6 @@ int main()
                 GetAllPDFs32(prefix, iset1, x, q, &up8,&dn8, &upv8, &dnv8, &usea8, &dsea8, &str8,
                     &sbar8, &chm8, &cbar8, &bot8, &bbar8, &glu8, &phot8);
 
-                //std::cout << upv7 << " " << upv8 << '\n';
                 sea8 = 2. * usea8 + 2. * dsea8 + str8 + sbar8;
                 seam8 = -usea8 + dsea8;
                 splus8 = str8 + sbar8;
@@ -1254,11 +1198,7 @@ int main()
             sminus11 = str11 - sbar11;
             seam11 = -usea11 + dsea11;
 
-            //if (x == 0.199)
-            //{
-            //    std::cout << nxch << ": " << ERRTOTsplus1 << " " << ERRTOTsplus2 << '\n';
-            //    std::cout << "> " << splus10 << ' ' << splus11 << '\n';
-            //}
+
 
             file << std::setprecision(15) << x << " "
                 // Quarks
@@ -1275,14 +1215,7 @@ int main()
                 << 10. * pow((bbar10 - bbar11) / (ERRTOTbbar1 + ERRTOTbbar2), 2) << " "
 
                 << 10. * pow((glu10 - glu11) / (ERRTOTg1 + ERRTOTg2), 2) << "\n";
-                /*
-                << 10. * pow((upv10 - upv11) / (ERRTOTupv1 + ERRTOTupv2),2) << " "
-                << 10. * pow((dnv10 - dnv11) / (ERRTOTdnv1 + ERRTOTdnv2),2) << " "
-                << 10. * pow((sea10 - sea11) / (ERRTOTsea1 + ERRTOTsea2),2) << " "
-                << 10. * pow((seam10 - seam11) / (ERRTOTseam1 + ERRTOTseam2),2) << " "
-                << 10. * pow((splus10 - splus11) / (ERRTOTsplus1 + ERRTOTsplus2),2) << " "
-                << 10. * pow((sminus10 - sminus11) / (ERRTOTsminus1 + ERRTOTsminus2),2) << '\n';
-                */
+ 
 
             PDFfile << std::setprecision(15) << x << " "
                 // Quarks

@@ -5,8 +5,7 @@ int locx(Eigen::VectorXd* xx, int nx, double x)
 {
 	//  returns an integer j such that x lies inbetween xx(j) and xx(j + 1).
 	//   nx is the length of the array with xx(nx) the highest element.
-	// std::cout << "nx_inside: " << nx << '\n';
-	// std::cout << x << ",," << xx(0) << '\n';
+
 	int jl{};
 	int ju{};
 	int jm{};
@@ -32,15 +31,9 @@ int locx(Eigen::VectorXd* xx, int nx, double x)
 		{
 			ju = jm;
 		}
-		//if (abs(pow(10., x) - 0.199) < 1e-5)
-		//{
-			//std::cout << "trial: " << (*xx)(28 - 1) << '\n';
-			//std::cout << "this: " << x << ' ' << (*xx)(jm - 1) << '\n';
-			//std::cout << ju << "," << jl << "," << jm << '\n';
-		//}
+
 	}
 	
-	//std::cout << "exit\n";
 	assert(jl != 0);
 
 	return jl;	
