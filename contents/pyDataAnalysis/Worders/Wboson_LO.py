@@ -1,7 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+# Disable interactive mode.
+plt.ioff()
 
 from tqdm import tqdm
+from pathlib import Path
+pathtohere = Path()
 
 from ..crossSection import CrossSection
 
@@ -155,6 +159,8 @@ class Wboson_LO(CrossSection):
             - Wcharge:str: W boson charge to display (+/-).
         """
         
+        assert Wcharge in {'+','-'}, "Wcharge must be one of {'+','-'}."
+
         
         if xaxis=='rapidity':
             x = self.rapidities_W
@@ -177,7 +183,7 @@ class Wboson_LO(CrossSection):
         if self.W_dy[Wcharge] is None:
             raise Exception('calculate_W_dy() has not been called.')
             
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(figsize=(8,8),dpi=200)
         ax = fig.add_subplot()
         
         ax.scatter(x, np.sum(self.W_dy[Wcharge],axis=0)*jacobian)
@@ -185,15 +191,19 @@ class Wboson_LO(CrossSection):
         
         # Create appropiate labels.
         if xaxis=='rapidity':
-            ax.set_xlabel(r'W boson rapidity / $y_W$')
+            ax.set_xlabel(r'W boson rapidity / $y_W$', fontsize=self.labelSize)
         elif xaxis=='cos':
-            ax.set_xlabel(r'$\cos \theta^*$')
+            ax.set_xlabel(r'$\cos \theta^*$',fontsize=self.labelSize)
         elif xaxis=='pt':
-            ax.set_xlabel(r'$p_{Te}$ [GeV]')
-        ax.set_ylabel(y_label)
-        ax.set_title(f'W{Wcharge}')
+            ax.set_xlabel(r'$p_{Te}$ [GeV]',fontsize=self.labelSize)
+        ax.set_ylabel(y_label,fontsize=self.labelSize)
+        ax.set_title(f'W{Wcharge}',fontsize=self.titleSize)
         
-        plt.show()
+        ax.xaxis.set_tick_params(labelsize=self.tickSize)
+        ax.yaxis.set_tick_params(labelsize=self.tickSize)
+        
+        plt.savefig(pathtohere / f'plots/W_LO/W{Wcharge}/W.png', bbox_inches='tight')
+        plt.close(fig)
         
         
     ########## Electron rapidity #################################################################
@@ -204,6 +214,8 @@ class Wboson_LO(CrossSection):
         Inputs:
             - Wcharge:str: W boson charge to calculate (+/-).
         """
+        
+        assert Wcharge in {'+','-'}, "Wcharge must be one of {'+','-'}."
         
         if self.W_dye[Wcharge] is None:
             print(f'Warning: W_dye[{Wcharge}] not calculated, calculating with default numTheta=100.')
@@ -229,6 +241,8 @@ class Wboson_LO(CrossSection):
             - displayContours:bool: Whether to display the 2D cross section heatmap.
         """
         
+        assert Wcharge in {'+','-'}, "Wcharge must be one of {'+','-'}."
+
         rapidities_e_2d,sigma_e,extent,y_star = self._get_ye_properties(Wcharge, numTheta)
             
         whereInclude = self._getCuts(cutType, lowerCut,
@@ -237,7 +251,7 @@ class Wboson_LO(CrossSection):
         sigma_e[:,np.logical_not(whereInclude)] = 0.
         
         if displayContours:
-            self._display_rapidityIntegralContours(sigma_e,extent)
+            self._display_rapidityIntegralContours(sigma_e,extent,Wcharge)
         
         self.rapidities_W_ye,self.W_dye[Wcharge] = self._integrateRapidityContours(sigma_e,
                                                                    rapidities_e_2d,extent,y_star,numTheta)
@@ -252,6 +266,7 @@ class Wboson_LO(CrossSection):
             - Wcharge:str: W boson charge to calculate (+/-).
         """
         
+        assert Wcharge in {'+','-'}, "Wcharge must be one of {'+','-'}."
         
         if Wcharge=='total':
             for Wq in ('+','-'):
@@ -272,18 +287,22 @@ class Wboson_LO(CrossSection):
                                 & (self.rapidities_W_ye<self.rapidities_W.max()))
         
         # Generate figure.
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(figsize=(8,8),dpi=200)
         ax = fig.add_subplot()
         
         ax.scatter(self.rapidities_W_ye[whereInclude], Wcont[whereInclude])
         ax.grid()
         
         # Create appropiate labels.
-        ax.set_xlabel(r'electron rapidity / $y_e$')
-        ax.set_ylabel(r'differential cross section  / $\frac{d\sigma}{dy_e}$ [pb]')
-        ax.set_title(title)
+        ax.set_xlabel(r'electron rapidity / $y_e$',fontsize=self.labelSize)
+        ax.set_ylabel(r'differential cross section  / $\frac{d\sigma}{dy_e}$ [pb]', fontsize=self.labelSize)
+        ax.set_title(title, fontsize=self.titleSize)
         
-        plt.show()
+        ax.xaxis.set_tick_params(labelsize=self.tickSize)
+        ax.yaxis.set_tick_params(labelsize=self.tickSize)
+        
+        plt.savefig(pathtohere / f'plots/W_LO/W{Wcharge}/W_dye.png', bbox_inches='tight')
+        plt.close(fig)
         
     def _integrateRapidityContours(self, sigma_e:np.ndarray,rapidities_e:np.ndarray, extent:tuple,
                                    y_star:np.ndarray,numTheta:int):
@@ -321,7 +340,7 @@ class Wboson_LO(CrossSection):
         binAreas = (self.rapidities_W[1:] - self.rapidities_W[:-1])[:,None] @ (y_star[1:] - y_star[:-1])[None,:]
         sigma_centres = (sigma_e[:-1,:-1] + sigma_e[1:,1:]) / 2.
         
-        
+
         for i in range(len(y_e_wanted)):
             include = np.where(closest==i)
             cs_e[i] = np.sum(sigma_centres[include] * binAreas[include])
@@ -347,6 +366,7 @@ class Wboson_LO(CrossSection):
             - y_star:np.ndarray: Rapidities of the lepton angle wrt W boson.
         """
                 
+        assert Wcharge in {'+','-'}, "Wcharge must be one of {'+','-'}."
         assert starParameter in {'rapidity', 'pT'}, "starParameter must be one of {'rapidity','pT'}."
         
         # Lepton angle wrt the W boson.
@@ -376,7 +396,7 @@ class Wboson_LO(CrossSection):
         
         return rapidities_e, sigma_e, extent, y_star
         
-    def _display_rapidityIntegralContours(self, sigma_e:np.ndarray, extent:tuple):
+    def _display_rapidityIntegralContours(self, sigma_e:np.ndarray, extent:tuple, Wcharge:str):
         """
         Display a figure showing the cross section heatmap with example
         integral contours in red.
@@ -384,8 +404,11 @@ class Wboson_LO(CrossSection):
         Inputs:
             - sigma_e:np.ndarray: Matrix of convoluted differential cross sections.
             - extent:tuple: Extent of the rapidity ranges.
+            - Wcharge:str: W boson charge to calculate (+/-).
         """
         
+        assert Wcharge in {'+','-'}, "Wcharge must be one of {'+','-'}."
+
         # Integral example contours.
         xstarts = np.linspace(extent[0],extent[1],4+1)[1:]
         ystarts = np.linspace(extent[2],extent[3],3+2)[1:-1]
@@ -393,7 +416,7 @@ class Wboson_LO(CrossSection):
         aspect = abs((extent[1] - extent[0]) / (extent[3] - extent[2]))
 
 
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(figsize=(8,8),dpi=200)
         ax = fig.add_subplot()
 
         # Create heatmap.
@@ -414,11 +437,17 @@ class Wboson_LO(CrossSection):
             ax.plot((xstart,xend),(ystart,yend),c='r')
             
 
-        ax.set_title(r'$\sigma(y^*) * \sigma(y_W)$')
-        ax.set_xlabel(r'$y^*$')
-        ax.set_ylabel(r'$y_W$')
+        # Create appropiate labels.
+        ax.set_title(r'$\sigma(y^*) * \sigma(y_W)$', fontsize=self.titleSize)
+        ax.set_xlabel(r'$y^*$',fontsize=self.labelSize)
+        ax.set_ylabel(r'$y_W$',fontsize=self.labelSize)
+        cbar.ax.yaxis.set_tick_params(labelsize=self.tickSize)
+        
+        ax.xaxis.set_tick_params(labelsize=self.tickSize)
+        ax.yaxis.set_tick_params(labelsize=self.tickSize)
 
-        plt.show()
+        plt.savefig(pathtohere / f'plots/W_LO/W{Wcharge}/W_dywdystar.png', bbox_inches='tight')
+        plt.close(fig)
         
         
     def calculate_thetaIntegralVariation(self, Wcharge:str, minNumTheta:int,
@@ -437,6 +466,9 @@ class Wboson_LO(CrossSection):
             - numThetas:np.ndarray: numThetas tested.
             - cs_W_ye_int:np.ndarray: Total cross-section contributions.
         """
+        
+        assert Wcharge in {'+','-'}, "Wcharge must be one of {'+','-'}."
+
         
         numThetas = np.logspace(np.log10(minNumTheta), np.log10(maxNumTheta),
                                 numThetaSamples,dtype=int)
@@ -461,17 +493,20 @@ class Wboson_LO(CrossSection):
             - cs_W_ye_int:np.ndarray: Total cross-section contributions.
         """
         
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(figsize=(8,8),dpi=200)
         ax = fig.add_subplot()
         
         ax.scatter(numThetas, cs_W_ye_int, c='r')
         ax.grid()
         
         # Create appropiate labels.
-        ax.set_xlabel('number of theta values')
-        ax.set_ylabel('W boson total cross-section')
-        ax.set_title(f'W{Wcharge}')
+        ax.set_xlabel('number of theta values',fontsize=self.labelSize)
+        ax.set_ylabel('W boson total cross-section',fontsize=self.labelSize)
+        ax.set_title(f'W{Wcharge}',fontsize=self.titleSize)
         
         ax.set_xscale('log')
+        ax.xaxis.set_tick_params(labelsize=self.tickSize)
+        ax.yaxis.set_tick_params(labelsize=self.tickSize)
         
-        plt.show()
+        plt.savefig(pathtohere / f'plots/W_LO/W{Wcharge}/W_ye_integral_convergence.png', bbox_inches='tight')
+        plt.close(fig)

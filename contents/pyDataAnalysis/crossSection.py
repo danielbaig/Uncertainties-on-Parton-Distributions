@@ -1,5 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+# Disable interactive mode.
+plt.ioff()
+
+from pathlib import Path
+pathtohere = Path()
 
 class CrossSection:
     numUpType:int = 2
@@ -13,6 +18,10 @@ class CrossSection:
     upTypeBar_i = slice(5,7)
     downTypeBar_i = slice(7,10)
     gluon_i = 10
+    
+    tickSize = 14
+    labelSize = 16
+    titleSize = 16
     
     
     
@@ -40,6 +49,7 @@ class CrossSection:
         self.numX = x1.shape[0]
         self.qs = qs[2:]
         self.numQ = qs.shape[0] - 2
+        
         
         
         # To fix cut dependence func:
@@ -220,7 +230,7 @@ class CrossSection:
         i = np.argwhere(boson==np.asarray(('W+','W-','Z')))[0,0]
         
         numSamples = 10
-        ptCuts = np.linspace(0,np.sqrt(self.WmassSqrd)/2., numSamples)
+        ptCuts = np.linspace(0,40, numSamples)
         cs_ratios = np.empty(numSamples)
         
         for j in range(numSamples):
@@ -249,23 +259,31 @@ class CrossSection:
         
         assert title in ('W+','W-','Z')
         
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(figsize=(8,8),dpi=200)
         ax = fig.add_subplot()
         
         ax.scatter(ptCuts, cs_ratios,label='numeric')
         ax.grid()
         
         # Fit
-        _trialFunc = lambda p: (2*np.sqrt(1 - 4*p*p/self.WmassSqrd) + 2/3*(1 - 4*p*p/self.WmassSqrd)**1.5) / (8/3)
-        ax.plot(ptCuts, _trialFunc(ptCuts), c='g',label='analytic')
+        fittedFunc = lambda p: (2*np.sqrt(1 - 4*p*p/self.WmassSqrd) + 2/3*(1 - 4*p*p/self.WmassSqrd)**1.5) / (8/3)
+        ax.plot(ptCuts, fittedFunc(ptCuts), c='g',label='analytic')
         
         # Create appropiate labels.
-        ax.set_xlabel('pt cut [GeV]')
-        ax.set_ylabel('differential cross section ratio')
-        ax.set_title(title)
-        ax.legend(loc='best')
+        ax.set_xlabel('pt cut [GeV]', fontsize=self.labelSize)
+        ax.set_ylabel('differential cross section ratio', fontsize=self.labelSize)
+        ax.set_title(title, fontsize=self.titleSize)
+        ax.legend(loc='best',fontsize=self.labelSize)
+        
+        ax.xaxis.set_tick_params(labelsize=self.tickSize)
+        ax.yaxis.set_tick_params(labelsize=self.tickSize)
                 
-        plt.show()
+        if title in {'W+','W-'}:
+            rootName = f'W_LO/{title}/'
+        else:
+            rootName = f'{title}_'
+        plt.savefig(pathtohere / f'plots/{rootName}cutRatioDependence.png', bbox_inches='tight')
+        plt.close(fig)
         
         
         

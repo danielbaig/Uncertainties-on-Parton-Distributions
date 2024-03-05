@@ -1,5 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+# Disable interactive mode.
+plt.ioff()
+
+from pathlib import Path
+pathtohere = Path()
 
 from .crossSection import CrossSection
 
@@ -106,16 +111,22 @@ class Photon(CrossSection):
         if self.photon_dm is None:
             raise Exception('calculate_photon_dm() has not been called.')
         
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(figsize=(8,8),dpi=200)
         ax = fig.add_subplot()
         
         ax.scatter(self.qs*self.qs, self.photon_dm)
         ax.grid()
         
         # Create appropiate labels.
-        ax.set_xlabel(r'$Q^2$ [$GeV^2$]')
-        ax.set_ylabel(r'differential cross section / $\frac{d\sigma}{dm^2}$ [pb $GeV^{-2}$]')
-        ax.set_title(r'$\gamma$')
+        ax.set_xlabel(r'$Q^2$ [$GeV^2$]',fontsize=self.labelSize)
+        ax.set_ylabel(r'differential cross section / $\frac{d\sigma}{dm^2}$ [pb $GeV^{-2}$]',fontsize=self.labelSize)
+        ax.set_title(r'$\gamma$',fontsize=self.titleSize)
         
-        plt.show()
+        ax.xaxis.set_tick_params(labelsize=self.tickSize)
+        ax.yaxis.set_tick_params(labelsize=self.tickSize)
+        ax.yaxis.offsetText.set_fontsize(self.tickSize)
+
+        
+        plt.savefig(pathtohere / 'plots/photon_dm.png', bbox_inches='tight')
+        plt.close(fig)
     

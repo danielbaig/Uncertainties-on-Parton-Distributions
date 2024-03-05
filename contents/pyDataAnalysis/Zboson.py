@@ -1,5 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+# Disable interactive mode.
+plt.ioff()
+
+from pathlib import Path
+pathtohere = Path()
 
 from .crossSection import CrossSection
 
@@ -130,7 +135,7 @@ class Zboson(CrossSection):
         if xaxis=='rapidity':
             x = self.rapidities_Z
             jacobian = 1.
-            y_label = r'differential cross section / $\frac{d\sigma}{dy}$ [pb]'
+            y_label = r'differential cross section / $\frac{d\sigma}{dy_Z}$ [pb]'
         elif xaxis=='cos' or xaxis=='pt':
             x = self._ytocos(self.rapidities_Z)
             jacobian = self._dy_dcos(x)
@@ -146,7 +151,7 @@ class Zboson(CrossSection):
         if self.Z_dy is None:
             raise Exception('calculate_Z_dy() has not been called.')
             
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(figsize=(8,8),dpi=200)
         ax = fig.add_subplot()
         
         ax.scatter(x, self.Z_dy*jacobian)
@@ -154,15 +159,19 @@ class Zboson(CrossSection):
         
         # Create appropiate labels.
         if xaxis=='rapidity':
-            ax.set_xlabel(r'Z boson rapidity / $y_Z$')
+            ax.set_xlabel(r'Z boson rapidity / $y_Z$',fontsize=self.labelSize)
         elif xaxis=='cos':
-            ax.set_xlabel(r'$\cos \theta^*$')
+            ax.set_xlabel(r'$\cos \theta^*$',fontsize=self.labelSize)
         elif xaxis=='pt':
-            ax.set_xlabel(r'$p_{Te}$ [GeV]')        
-        ax.set_ylabel(y_label)
-        ax.set_title('Z')
+            ax.set_xlabel(r'$p_{Te}$ [GeV]',fontsize=self.labelSize)        
+        ax.set_ylabel(y_label,fontsize=self.labelSize)
+        ax.set_title('Z',fontsize=self.titleSize)
         
-        plt.show()
+        ax.xaxis.set_tick_params(labelsize=self.tickSize)
+        ax.yaxis.set_tick_params(labelsize=self.tickSize)
+        
+        plt.savefig(pathtohere / 'plots/Z.png', bbox_inches='tight')
+        plt.close(fig)
         
         
         
