@@ -154,7 +154,7 @@ class Zboson(CrossSection):
         fig = plt.figure(figsize=(8,8),dpi=200)
         ax = fig.add_subplot()
         
-        ax.scatter(x, self.Z_dy*jacobian)
+        ax.scatter(x, self.Z_dy*jacobian,c='orange')
         ax.grid()
         
         # Create appropiate labels.

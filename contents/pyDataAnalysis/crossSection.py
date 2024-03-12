@@ -105,7 +105,7 @@ class CrossSection:
         
         """
 
-        return (1. + cos*cos) / (2.*(1 - cos)*(1 + cos))
+        return 1. / ((1 - cos)*(1 + cos))
     
     @staticmethod
     def _dcos_dy(y:np.ndarray):
@@ -121,7 +121,7 @@ class CrossSection:
         
         exp_y = np.exp(2*y)
         
-        return 2*exp_y * 2 / (exp_y + 1) / (exp_y + 1)
+        return 4*exp_y / (exp_y + 1) / (exp_y + 1)
 
 
     @staticmethod
@@ -229,7 +229,7 @@ class CrossSection:
         assert boson in ('W+','W-','Z')
         i = np.argwhere(boson==np.asarray(('W+','W-','Z')))[0,0]
         
-        numSamples = 10
+        numSamples = 20
         ptCuts = np.linspace(0,40, numSamples)
         cs_ratios = np.empty(numSamples)
         
@@ -270,7 +270,7 @@ class CrossSection:
         ax.plot(ptCuts, fittedFunc(ptCuts), c='g',label='analytic')
         
         # Create appropiate labels.
-        ax.set_xlabel('pt cut [GeV]', fontsize=self.labelSize)
+        ax.set_xlabel(r'$p_T$ cut [GeV]', fontsize=self.labelSize)
         ax.set_ylabel('differential cross section ratio', fontsize=self.labelSize)
         ax.set_title(title, fontsize=self.titleSize)
         ax.legend(loc='best',fontsize=self.labelSize)

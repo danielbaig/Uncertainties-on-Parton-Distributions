@@ -186,7 +186,7 @@ class Wboson_LO(CrossSection):
         fig = plt.figure(figsize=(8,8),dpi=200)
         ax = fig.add_subplot()
         
-        ax.scatter(x, np.sum(self.W_dy[Wcharge],axis=0)*jacobian)
+        ax.scatter(x, np.sum(self.W_dy[Wcharge],axis=0)*jacobian,c='b')
         ax.grid()
         
         # Create appropiate labels.
@@ -290,7 +290,7 @@ class Wboson_LO(CrossSection):
         fig = plt.figure(figsize=(8,8),dpi=200)
         ax = fig.add_subplot()
         
-        ax.scatter(self.rapidities_W_ye[whereInclude], Wcont[whereInclude])
+        ax.scatter(self.rapidities_W_ye[whereInclude][1:-1], Wcont[whereInclude][1:-1],c='m')
         ax.grid()
         
         # Create appropiate labels.
@@ -323,7 +323,7 @@ class Wboson_LO(CrossSection):
         
         numYWanted = 30
         y_e_binWidth = 0.21 # https://arxiv.org/abs/1612.03016
-        y_e_wanted = np.arange(extent[0]+extent[2],extent[1]+extent[3],y_e_binWidth)
+        y_e_wanted = np.arange(-3,3,y_e_binWidth)
         
         cs_e = np.empty_like(y_e_wanted,dtype=float)
         
@@ -337,7 +337,7 @@ class Wboson_LO(CrossSection):
                 closest[i,j] = np.argwhere(contourDiff[i,j]==np.min(contourDiff[i,j]))[0][0]
 
         # Determine all 2D bin areas.
-        binAreas = (self.rapidities_W[1:] - self.rapidities_W[:-1])[:,None] @ (y_star[1:] - y_star[:-1])[None,:]
+        binAreas = np.abs((self.rapidities_W[1:] - self.rapidities_W[:-1])[:,None] @ (y_star[1:] - y_star[:-1])[None,:])
         sigma_centres = (sigma_e[:-1,:-1] + sigma_e[1:,1:]) / 2.
         
 
@@ -370,7 +370,7 @@ class Wboson_LO(CrossSection):
         assert starParameter in {'rapidity', 'pT'}, "starParameter must be one of {'rapidity','pT'}."
         
         # Lepton angle wrt the W boson.
-        thetas_star = np.linspace(0,np.pi,numTheta+2)[1:-1][::-1]
+        thetas_star = np.linspace(0,2*np.pi,numTheta+2)[1:-1][::-1]
         y_star = 0.5*np.log((1 + np.cos(thetas_star)) / (1 - np.cos(thetas_star)))
         pT_star = self._costopt(np.cos(thetas_star), self.WmassSqrd)
         rapidities_e = self.rapidities_W[:,None] + y_star[None,:]
@@ -391,7 +391,7 @@ class Wboson_LO(CrossSection):
             sigma_e += self.W_dy[Wcharge][k][:,None] @ sigma_y_star[None,:]
 
         
-        extent = (y_star[0],y_star[-1],self.rapidities_W[0],self.rapidities_W[-1])
+        extent = (y_star.min(),y_star.max(),self.rapidities_W[0],self.rapidities_W[-1])
         
         
         return rapidities_e, sigma_e, extent, y_star

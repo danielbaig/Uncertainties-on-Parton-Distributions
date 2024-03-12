@@ -114,7 +114,7 @@ class Photon(CrossSection):
         fig = plt.figure(figsize=(8,8),dpi=200)
         ax = fig.add_subplot()
         
-        ax.scatter(self.qs*self.qs, self.photon_dm)
+        ax.scatter(self.qs*self.qs, self.photon_dm,c='orange')
         ax.grid()
         
         # Create appropiate labels.
