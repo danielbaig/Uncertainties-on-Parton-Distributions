@@ -121,7 +121,7 @@ class CrossSection:
         
         exp_y = np.exp(2*y)
         
-        return 4*exp_y / (exp_y + 1) / (exp_y + 1)
+        return 8*exp_y / (exp_y + 1) / (exp_y + 1)
 
 
     @staticmethod

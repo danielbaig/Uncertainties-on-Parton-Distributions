@@ -36,11 +36,11 @@ class Wboson_NLO(CrossSection):
 
         self.s_hat = LHC_s*self.x1[:,None]*self.x2[None,:]
 
-        self.num_pT = 30
+        self.num_pT = 20
         self.WmassSqrd = WmassSqrd
 
 
-        self.pTs = np.linspace(5,150,self.num_pT)
+        self.pTs = np.linspace(5,180,self.num_pT)
 
         self.costheta_W = np.sqrt(1 - 4*self.pTs[None,None,:]**2 *self.s_hat[:,:,None] 
                            / (self.s_hat[:,:,None]-self.WmassSqrd)**2)
@@ -50,7 +50,7 @@ class Wboson_NLO(CrossSection):
                                        - (self.s_hat[:,:,None] - self.WmassSqrd)*self.costheta_W))
 
 
-        epsilon = 0.2 * self.pTs[None,None,:]
+        epsilon = 0.25 * self.pTs[None,None,:]
         self.threshold = (self.pTs[None,None,:] + np.sqrt(self.WmassSqrd + self.pTs[None,None,:]**2) 
                           + epsilon)
                          
@@ -65,7 +65,10 @@ class Wboson_NLO(CrossSection):
             '-' : None
         }
         
-
+        self.W_dyW = {
+            '+' : None,
+            '-' : None
+        }
         self.W_dye = {
             '+' : None,
             '-' : None
@@ -142,14 +145,22 @@ class Wboson_NLO(CrossSection):
                 poisson_qg = np.zeros((2,self.numX,self.numX))
                 for k in range(2):
                     if Wcharge=='+':
-                        poisson_qq[k] += upTypePDFs[k,:,None,i] * downTypeBarPDFs[1-k,None,:,j]
-                        poisson_qg[k] += (upTypePDFs[k,:,None,i] * gluonPDF[1-k,None,:] 
-                                       + gluonPDF[k,:,None] * downTypeBarPDFs[1-k,None,:,j])
+                        poisson_qq[k] += upTypePDFs[0,:,None,i] * downTypeBarPDFs[1,None,:,j]
+                        poisson_qg[k] += (upTypePDFs[0,:,None,i] * gluonPDF[1,None,:] 
+                                       + gluonPDF[0,:,None] * downTypeBarPDFs[1,None,:,j])
+                        poisson_qq[k] += upTypePDFs[1,None,:,i] * downTypeBarPDFs[0,:,None,j]
+                        poisson_qg[k] += (upTypePDFs[1,None,:,i] * gluonPDF[0,:,None] 
+                                       + gluonPDF[1,None,:] * downTypeBarPDFs[0,:,None,j])
+                        
 
                     else:
-                        poisson_qq[k] += upTypeBarPDFs[k,:,None,i] * downTypePDFs[1-k,None,:,j]
-                        poisson_qg[k] += (upTypeBarPDFs[k,:,None,i] * gluonPDF[1-k,None,:]
-                                       + gluonPDF[k,:,None] * downTypePDFs[1-k,None,:,j])
+                        poisson_qq[k] += upTypeBarPDFs[0,:,None,i] * downTypePDFs[1,None,:,j]
+                        poisson_qg[k] += (upTypeBarPDFs[0,:,None,i] * gluonPDF[1,None,:]
+                                       + gluonPDF[0,:,None] * downTypePDFs[1,None,:,j])
+                        poisson_qq[k] += upTypeBarPDFs[1,None,:,i] * downTypePDFs[0,:,None,j]
+                        poisson_qg[k] += (upTypeBarPDFs[1,None,:,i] * gluonPDF[0,:,None]
+                                       + gluonPDF[1,None,:] * downTypePDFs[0,:,None,j])
+
 
                 W_dy_qq += CKM[i,j]*CKM[i,j] * poisson_qq
                 W_dy_qg += CKM[i,j]*CKM[i,j] * poisson_qg
@@ -164,6 +175,7 @@ class Wboson_NLO(CrossSection):
         W_dx1dx2dpT *= BR_W_enu
         
         self.W_dx1dx2dpT[Wcharge] = W_dx1dx2dpT
+
        
         
     def calculate_W_dpT(self, Wcharge:str):
@@ -200,7 +212,89 @@ class Wboson_NLO(CrossSection):
         if np.any(self.W_dpT[Wcharge][:-1] - self.W_dpT[Wcharge][1:] < 0):
             print('Warning: pT distribution is not all decreasing. epsilon should be increased.')
             print(self.W_dpT[Wcharge][:-1] - self.W_dpT[Wcharge][1:])
+            
+            
+    def calculate_W_dyW(self,Wcharge:str):
+        """
+        Determine the distribution of the cross-sections wrt the W boson rapidity.
+        
+        Inputs:
+            - Wcharge:str: W boson charge to calculate (+/-).
+        """
+        
+        assert Wcharge in {'+','-'}, "Wcharge must be one of {'+','-'}."
+        
+        if self.W_dx1dx2dpT[Wcharge] is None:
+            self.calculate_W_dx1dx2dpT(Wcharge)
+        
+        whereInvalid = (np.sqrt(self.s_hat[:,:,None]) < self.threshold)
+        
+        for i in range(2):
+            Wsign = 1. - 2.*i
+        
+            # Determine sign on y_W.
+            momentumDifference = ((self.x1[:,None,None] - self.x2[None,:,None]) * np.sqrt(LHC_s)/2. 
+                                    + (self.s_hat[:,:,None]-self.WmassSqrd)/(2*np.sqrt(self.s_hat[:,:,None])) 
+                                  * Wsign * self.costheta_W)
+            momentumSign = np.zeros(momentumDifference.shape)
+            momentumSign[(momentumDifference<0) & np.logical_not(whereInvalid)] = -1.
+            momentumSign[(momentumDifference>0) & np.logical_not(whereInvalid)] = 1.
+            
+            cs_temp = self._integrate_to_dyW(Wcharge, momentumSign)
+            
+            if i==0:
+                self.W_dyW[Wcharge] = np.zeros((2,self.yW_bins.shape[0]),dtype=float)
+            self.W_dyW[Wcharge] += cs_temp
+        
+                
+        
+            
+    def _integrate_to_dyW(self,Wcharge:str, momentumSign:np.ndarray):
+        """
+        Integrate over free parameters and bin into yW.
+        
+        Inputs:
+            - Wcharge:str: W boson charge to calculate (+/-).
+            - momentumSign:np.ndarray: Sign of yW due to emitted W boson direction.
+        """
+        
+        assert Wcharge in {'+','-'}, "Wcharge must be one of {'+','-'}."
+        
+        # Define bins.
+        num_yW = 78
+        self.yW_bins = np.linspace(-1.5,1.5,num_yW)
+        y_W_binWidth = (self.yW_bins[-1] - self.yW_bins[0]) / num_yW
+        
+        # Get distance between all points and contours.
+        rapidities_W_centre = ((momentumSign*self.rapidities_W)[1:,1:,1:] + (momentumSign*self.rapidities_W)[:-1,:-1,:-1]) / 2
+        contourDiff = np.abs(rapidities_W_centre[:,:,:,None] - self.yW_bins[None,None,None,:])
+        
+        isAllowed = ((np.sqrt(self.s_hat[:-1,:-1,None]) > self.threshold) 
+                                   & (np.sqrt(self.s_hat[1:,1:,None]) > self.threshold))
+        isAllowed = isAllowed[:,:,1:] & isAllowed[:,:,:-1]
+        cs_yW = np.empty((2,num_yW),dtype=float)
+        for k in range(2):
 
+            closest = -np.ones(contourDiff.shape[:3],dtype=int)
+            # Find the indices of minimum values along the last axis of contourDiff
+            closest = np.argmin(contourDiff, axis=3)
+            
+            # Assign the minimum indices to the corresponding positions in closest
+            closest[np.logical_not(isAllowed)] = -1
+
+            # Determine all 3D bin areas.
+            binAreas = np.abs((momentumSign*self.rapidities_W)[1:,1:,1:] - (momentumSign*self.rapidities_W)[:-1,:-1,:-1])
+            
+
+            sigma_centres = (self.W_dx1dx2dpT[Wcharge][k,:-1,:-1,:-1] + self.W_dx1dx2dpT[Wcharge][k,1:,1:,1:]) / 2.
+
+
+            for i in range(num_yW):
+                include = np.where(closest==i)
+                cs_yW[k,i] = np.sum(sigma_centres[include] * binAreas[include])
+        cs_yW /= y_W_binWidth
+            
+        return cs_yW
 
             
             
@@ -222,7 +316,7 @@ class Wboson_NLO(CrossSection):
         assert (xother_j<self.numX) and (xother_j>=0), 'xother_j must be in range 0<=x<numX'
         
         if self.W_dx1dx2dpT[Wcharge] is None:
-            self.calculate_W_ddx1dx2dpT(Wcharge)
+            self.calculate_W_dx1dx2dpT(Wcharge)
         
         
         fig = plt.figure(figsize=(10,10),tight_layout=True,dpi=200)
@@ -276,6 +370,44 @@ class Wboson_NLO(CrossSection):
         plt.savefig(pathtohere / f'plots/W_NLO/W{Wcharge}/W_dxidpT.png', bbox_inches='tight')
         plt.close(fig)
         
+        
+    def display_W_dyW(self,Wcharge:str):
+        """
+        Display how the W cross-section varies with W rapidity.
+        
+        Inputs:
+            - Wcharge:str: W boson charge to integrate.
+        """
+        
+        assert Wcharge in {'+','-'}, "Wcharge must be one of {'+','-'}."
+            
+        if self.W_dyW[Wcharge] is None:
+            self.calculate_W_dyW(Wcharge)
+            
+        whereValid = (np.sqrt(self.s_hat[:,:,None]) > self.threshold)
+        exclusionThreshold = np.min(self.rapidities_W[whereValid])
+        
+        whereInclude = (self.yW_bins > exclusionThreshold) |  (self.yW_bins < -exclusionThreshold)
+            
+        fig = plt.figure(figsize=(8,8),dpi=200)
+        ax = fig.add_subplot()
+
+        ax.scatter(self.yW_bins[whereInclude][1:-1], np.sum(self.W_dyW[Wcharge],axis=0)[whereInclude][1:-1],
+                   marker='.',c='b')
+        
+        ax.grid()
+        
+        # Create appropiate labels.
+        ax.set_xlabel(f'W boson rapidity / $y_W$',fontsize=self.labelSize)
+        ax.set_ylabel(r'differential cross-section / $\frac{d\sigma}{dy_W}$ $[pb]$',
+                      fontsize=self.labelSize)
+        ax.set_title(f'W{Wcharge}',fontsize=self.titleSize)
+        
+        ax.xaxis.set_tick_params(labelsize=self.tickSize)
+        ax.yaxis.set_tick_params(labelsize=self.tickSize)
+        
+        plt.savefig(pathtohere / f'plots/W_NLO/W{Wcharge}/W_dyW.png', bbox_inches='tight')
+        plt.close(fig)
         
         
     def display_W_dpT(self, Wcharge:str):
@@ -368,7 +500,7 @@ class Wboson_NLO(CrossSection):
             self.rapidities_W_ye,temp_cs = self._integrateRapidityContours(sigma_e,
                                            rapidities_e_2d,extent,y_star,numTheta)
             if rapidityComb_W=='+':
-                    self.W_dye[Wcharge] = np.zeros(temp_cs.shape[0])
+                self.W_dye[Wcharge] = np.zeros(temp_cs.shape[0])
 
             self.W_dye[Wcharge] += temp_cs
                     
@@ -408,14 +540,6 @@ class Wboson_NLO(CrossSection):
         momentumSign = np.zeros(momentumDifference.shape)
         momentumSign[(momentumDifference<0) & np.logical_not(whereInvalid)] = -1.
         momentumSign[(momentumDifference>0) & np.logical_not(whereInvalid)] = 1.
-        
-#         plt.imshow(momentumSign[:,:,0],cmap='coolwarm',origin='lower')
-#         prop = np.empty(self.num_pT)
-
-#         for i in range(self.num_pT):
-#             prop[i] = len(np.argwhere(momentumSign[:,:,i]>0)) / len(np.argwhere(np.logical_not(whereInvalid[:,:,i])))
-#         print(prop)
-#         print(np.mean(prop))
             
         
         # Lepton transverse momenta.
@@ -426,7 +550,7 @@ class Wboson_NLO(CrossSection):
                            - (self.s_hat[:,:,None,None] - self.WmassSqrd) / (4*np.sqrt(self.s_hat[:,:,None,None]))
                            *Wsign*self.costheta_W[:,:,:,None]*np.sin(thetas_star)[None,None,None,:])
         
-        
+        # Electron rapidity in W frame.
         pz_e_dir = (Wsign*self.costheta_W[:,:,:,None] * np.cos(thetas_star)[None,None,None,:]
                     -2*self.pTs[None,None,:,None]*np.sqrt(self.s_hat[:,:,None,None])
                     /(self.s_hat[:,:,None,None] - self.WmassSqrd)*np.sin(thetas_star)[None,None,None,:])
@@ -435,6 +559,7 @@ class Wboson_NLO(CrossSection):
 
             
         rapidities_e = momentumSign[:,:,:,None]*self.rapidities_W[:,:,:,None] + y_star[:,:,:,:]
+
 
         
         sigma_e = np.zeros((self.numX,self.numX,self.num_pT,numTheta))
@@ -446,7 +571,7 @@ class Wboson_NLO(CrossSection):
                 sigma_theta = (1. - np.cos(thetas_star))**2
 
             # Apply Jacobian dcos*/dy*.
-            sigma_y_star = np.abs(np.sin(thetas_star)[None,None,None,:]*((np.sin(thetas_star)[None,None,None,:]
+            sigma_y_star = 2*np.abs(np.sin(thetas_star)[None,None,None,:]*((np.sin(thetas_star)[None,None,None,:]
                                  *Wsign*self.costheta_W[:,:,:,None])
                          + np.cos(thetas_star)[None,None,None,:]*
                             2*self.pTs[None,None,:,None]*np.sqrt(self.s_hat[:,:,None,None])
@@ -467,7 +592,6 @@ class Wboson_NLO(CrossSection):
         extent = ((y_star[whereInclude_star]).min(),(y_star[whereInclude_star]).max(),
                   (momentumSign*self.rapidities_W)[whereInclude].min(),
                   (momentumSign*self.rapidities_W)[whereInclude].max())
-#         print(extent)
         
         return rapidities_e, sigma_e, extent, y_star
     
@@ -495,7 +619,7 @@ class Wboson_NLO(CrossSection):
         #y_e_binWidth = 0.21 # https://arxiv.org/abs/1612.03016
 #         y_e_wanted = np.arange(-2,2,y_e_binWidth)
         num_ye = 20#y_e_wanted.shape[0]
-        y_e_wanted = np.linspace(-4,4,num_ye)
+        y_e_wanted = np.linspace(-5,5,num_ye)
         y_e_binWidth = (y_e_wanted[-1] - y_e_wanted[0]) / num_ye
         
         
@@ -504,8 +628,6 @@ class Wboson_NLO(CrossSection):
         
         startTime = perf_counter()
         contourDiff = abs(rapidities_e_centre[:,:,:,:,None] - y_e_wanted[None,None,None,None,:])
-#         print(f'Rapidity difference calculation: {perf_counter() - startTime} s')
-#         print(f'Rapidity 5-tensor size: {contourDiff.size * contourDiff.itemsize *1e-6} MB')
         
         
         closest = -np.ones(contourDiff.shape[:4],dtype=int)
@@ -513,13 +635,10 @@ class Wboson_NLO(CrossSection):
         startTime = perf_counter()
         # Find the indices of minimum values along the last axis of contourDiff
         closest = np.argmin(contourDiff, axis=4)
-#         print(f'Closest contour calculation: {perf_counter() - startTime} s')
 
         # Assign the minimum indices to the corresponding positions in closest
         closest[np.logical_not(isAllowed),:] = -1
         
-#         print(f'Percentage full: {1e+2*(1 - np.count_nonzero(closest==-1)/closest.size)}%')
-
                     
         # Determine all 4D bin areas.
         binAreas = np.abs((self.rapidities_W[1:,1:,1:] - self.rapidities_W[:-1,:-1,:-1])[:,:,:,None] 
@@ -527,6 +646,7 @@ class Wboson_NLO(CrossSection):
         
         
         sigma_centres = (sigma_e[:-1,:-1,:-1,:-1] + sigma_e[1:,1:,1:,1:]) / 2.
+        
             
         cs_e = np.empty((num_ye),dtype=float)
         for i in range(len(y_e_wanted)):
