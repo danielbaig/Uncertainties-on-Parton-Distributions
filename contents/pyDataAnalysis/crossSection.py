@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 # Disable interactive mode.
 plt.ioff()
 
+from tqdm import tqdm
 from pathlib import Path
 pathtohere = Path()
 
@@ -232,8 +233,8 @@ class CrossSection:
         numSamples = 20
         ptCuts = np.linspace(0,40, numSamples)
         cs_ratios = np.empty(numSamples)
-        
-        for j in range(numSamples):
+
+        for j in tqdm(range(numSamples)):
             if i==2:
                 self.calculate_Z(cutType='pt', lowerCut=ptCuts[j])
             else:
@@ -271,7 +272,7 @@ class CrossSection:
         
         # Create appropiate labels.
         ax.set_xlabel(r'$p_T$ cut [GeV]', fontsize=self.labelSize)
-        ax.set_ylabel('differential cross section ratio', fontsize=self.labelSize)
+        ax.set_ylabel('total cross section ratio', fontsize=self.labelSize)
         ax.set_title(title, fontsize=self.titleSize)
         ax.legend(loc='best',fontsize=self.labelSize)
         

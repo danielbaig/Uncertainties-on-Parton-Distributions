@@ -38,6 +38,8 @@ class Wboson_LO(CrossSection):
         """
         
         CrossSection.__init__(self,data1,data2,x1,x2s,qs)
+        
+
 
                  
         self.WmassSqrd = WmassSqrd
@@ -164,17 +166,23 @@ class Wboson_LO(CrossSection):
         
         if xaxis=='rapidity':
             x = self.rapidities_W
-            y_label = r'differential cross section / $\frac{d\sigma}{dy}$ [pb]'
+
+            
+            y_label = r'differential cross section / $\frac{d\sigma}{dy_W}$ [pb]'
             jacobian = 1.
         elif xaxis=='cos' or xaxis=='pt':
             x = self._ytocos(self.rapidities_W)
             jacobian = self._dy_dcos(x)
             y_label = r'differential cross section / $\frac{d\sigma}{d\cos\theta^*}$ [pb]'
+
+            
             
             if xaxis=='pt':
                 x = self._costopt(x,self.WmassSqrd)
                 jacobian *= self._dcos_dpt(x,self.WmassSqrd)
                 y_label = r'differential cross section / $\frac{d\sigma}{dp_T}$ [pb $GeV^{-1}$]'
+
+                
             
 
         else:
@@ -255,7 +263,8 @@ class Wboson_LO(CrossSection):
         
         self.rapidities_W_ye,self.W_dye[Wcharge] = self._integrateRapidityContours(sigma_e,
                                                                    rapidities_e_2d,extent,y_star,numTheta)
-         
+
+        
         
         
     def display_W_dye(self,Wcharge:str):
@@ -284,7 +293,9 @@ class Wboson_LO(CrossSection):
             
                 
         whereInclude = np.where((self.rapidities_W_ye>self.rapidities_W.min()) 
-                                & (self.rapidities_W_ye<self.rapidities_W.max()))
+                                & (self.rapidities_W_ye<self.rapidities_W.max())
+                                & (self.rapidities_W_ye>-self.rapidities_W.max())
+                                & (self.rapidities_W_ye<-self.rapidities_W.min()))
         
         # Generate figure.
         fig = plt.figure(figsize=(8,8),dpi=200)
@@ -323,13 +334,13 @@ class Wboson_LO(CrossSection):
         
         numYWanted = 30
         y_e_binWidth = 0.21 # https://arxiv.org/abs/1612.03016
-        y_e_wanted = np.arange(-3,3,y_e_binWidth)
+        y_e_wanted = np.arange(-4,4,y_e_binWidth)
         
         cs_e = np.empty_like(y_e_wanted,dtype=float)
         
         # For each rapidities_e find which y_e_wanted it is closest to.
         rapidities_e_centre = (rapidities_e[1:,1:] + rapidities_e[:-1,:-1]) / 2
-        contourDiff = abs(rapidities_e_centre[:,:,None] - y_e_wanted[None,None,:])
+        contourDiff = np.abs(rapidities_e_centre[:,:,None] - y_e_wanted[None,None,:])
         
         closest = np.empty(contourDiff.shape[:2])
         for i in range(contourDiff.shape[0]):

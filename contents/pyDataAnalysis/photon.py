@@ -118,8 +118,8 @@ class Photon(CrossSection):
         ax.grid()
         
         # Create appropiate labels.
-        ax.set_xlabel(r'$Q^2$ [$GeV^2$]',fontsize=self.labelSize)
-        ax.set_ylabel(r'differential cross section / $\frac{d\sigma}{dm^2}$ [pb $GeV^{-2}$]',fontsize=self.labelSize)
+        ax.set_xlabel(r'$M^2$ [$GeV^2$]',fontsize=self.labelSize)
+        ax.set_ylabel(r'differential cross section / $\frac{d\sigma}{dM^2}$ [pb $GeV^{-2}$]',fontsize=self.labelSize)
         ax.set_title(r'$\gamma$',fontsize=self.titleSize)
         
         ax.xaxis.set_tick_params(labelsize=self.tickSize)
